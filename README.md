@@ -19,7 +19,8 @@ For a CUDA 11 installation, replace `cupy-cuda12x` with the matching CuPy packag
 ## Installation
 
 ```bash
-cd python-cupy-sobel
+git clone https://github.com/amir-sbg/cuda.git
+cd cuda
 python -m venv .venv
 source .venv/bin/activate       # Windows: .venv\Scripts\activate
 python -m pip install -r requirements.txt
@@ -61,7 +62,7 @@ The report contains the input shape, block dimensions, CPU time, GPU kernel time
 ## Project structure
 
 ```text
-python-cupy-sobel/
+.
 ├── src/gpu_edges/
 │   ├── kernels/sobel.cu  # CUDA Sobel kernel
 │   ├── cuda.py           # CuPy RawKernel bridge and timing
