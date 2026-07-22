@@ -75,3 +75,7 @@ The reported GPU time covers kernel execution only. Memory allocation and host/d
 ├── Makefile           # build and run shortcuts
 └── README.md
 ```
+
+## Python/CUDA project
+
+[`python-cupy-sobel/`](python-cupy-sobel/) contains a higher-level image-processing example. It uses Python for the pipeline and CuPy to compile and launch a custom CUDA Sobel kernel, with a NumPy reference implementation for validation and timing.
