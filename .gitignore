@@ -1,0 +1,13 @@
+# Build output
+/build/
+/bin/
+
+# Local environments and IDE files
+.cache/
+.vscode/
+.idea/
+.DS_Store
+
+# Profiling output
+*.nsys-rep
+*.sqlite
