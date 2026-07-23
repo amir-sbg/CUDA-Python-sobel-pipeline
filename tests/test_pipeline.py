@@ -5,7 +5,7 @@ import pytest
 
 from gpu_edges.config import PipelineConfig
 from gpu_edges.cpu import sobel_edges
-from gpu_edges.cuda import cuda_available
+from gpu_edges.cuda import benchmark_gpu, cuda_available, sobel_edges_gpu
 from gpu_edges.data import generate_image
 from gpu_edges.metrics import comparison_metrics
 from gpu_edges.pipeline import run
@@ -57,3 +57,10 @@ def test_config_rejects_oversized_blocks() -> None:
 
 def test_cuda_availability_returns_a_boolean() -> None:
     assert isinstance(cuda_available(), bool)
+
+
+def test_gpu_entrypoints_validate_inputs_before_device_check() -> None:
+    with pytest.raises(ValueError, match="two-dimensional"):
+        sobel_edges_gpu(np.zeros((8, 8, 1), dtype=np.float32))
+    with pytest.raises(ValueError, match="1024"):
+        benchmark_gpu(np.zeros((8, 8), dtype=np.float32), 33, 32, 1)
