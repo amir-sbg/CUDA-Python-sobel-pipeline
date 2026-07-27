@@ -46,6 +46,8 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     )
     report = run(config, cpu_only=True)
     assert report["backend"] == "cpu"
+    assert report["input_source"] == "generated"
+    assert report["input_dtype"] == "float32"
     assert config.output_path.exists()
     assert config.report_path.exists()
 

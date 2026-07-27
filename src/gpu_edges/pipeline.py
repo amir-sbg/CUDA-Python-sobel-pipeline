@@ -40,7 +40,9 @@ def run(
     cpu_output, cpu_ms = _benchmark_cpu(image, config.iterations)
     report = {
         "backend": "cpu",
+        "input_source": str(input_path) if input_path else "generated",
         "input_shape": list(image.shape),
+        "input_dtype": str(image.dtype),
         "block": [config.block_x, config.block_y],
         "iterations": config.iterations,
         "cpu_average_ms": cpu_ms,
