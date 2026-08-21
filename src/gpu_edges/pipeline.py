@@ -10,7 +10,7 @@ from .cpu import sobel_edges
 from .cuda import benchmark_gpu, cuda_available
 from .data import generate_image
 from .io import load_grayscale, save_grayscale
-from .metrics import comparison_metrics
+from .metrics import comparison_metrics, edge_statistics
 
 
 def _benchmark_cpu(image, iterations: int) -> tuple[object, float]:
@@ -64,6 +64,8 @@ def run(
         report["speedup"] = cpu_ms / gpu_ms
         report["comparison"] = comparison_metrics(cpu_output, output)
 
+    report["edge_threshold"] = config.edge_threshold
+    report["edge_statistics"] = edge_statistics(output, config.edge_threshold)
     save_grayscale(_normalize(output), config.output_path)
     config.report_path.parent.mkdir(parents=True, exist_ok=True)
     config.report_path.write_text(json.dumps(report, indent=2) + "\n")
@@ -80,6 +82,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--block-x", type=int, default=16)
     parser.add_argument("--block-y", type=int, default=16)
     parser.add_argument("--iterations", type=int, default=50)
+    parser.add_argument("--edge-threshold", type=float, default=0.20)
     parser.add_argument("--output", type=Path, default=Path("outputs/sobel_edges.png"))
     parser.add_argument("--report", type=Path, default=Path("reports/run.json"))
     parser.add_argument("--cpu-only", action="store_true")

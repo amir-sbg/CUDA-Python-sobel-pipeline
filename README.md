@@ -44,6 +44,7 @@ python -m gpu_edges.pipeline \
   --block-x 16 \
   --block-y 16 \
   --iterations 50 \
+  --edge-threshold 0.20 \
   --output outputs/edges.png \
   --report reports/run.json
 ```
@@ -57,7 +58,7 @@ python -m gpu_edges.pipeline \
   --width 256
 ```
 
-The report contains the input shape, block dimensions, CPU time, GPU kernel time, speedup, and CPU/GPU comparison error. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution.
+The report contains the input shape, block dimensions, CPU time, GPU kernel time, speedup, CPU/GPU comparison error, and simple edge statistics such as mean magnitude and edge density. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution.
 
 ## Project structure
 
