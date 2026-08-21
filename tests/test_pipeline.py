@@ -7,7 +7,7 @@ from gpu_edges.config import PipelineConfig
 from gpu_edges.cpu import sobel_edges
 from gpu_edges.cuda import benchmark_gpu, cuda_available, sobel_edges_gpu
 from gpu_edges.data import generate_image
-from gpu_edges.metrics import comparison_metrics, edge_statistics
+from gpu_edges.metrics import comparison_metrics, edge_statistics, speedup_ratio
 from gpu_edges.pipeline import run
 
 
@@ -50,6 +50,13 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
     assert stats["edge_density"] == 0.5
     assert stats["max_magnitude"] == pytest.approx(0.8)
     assert stats["mean_magnitude"] == pytest.approx(float(edges.mean()))
+
+
+def test_speedup_ratio_handles_zero_gpu_time() -> None:
+    assert speedup_ratio(4.0, 2.0) == 2.0
+    assert speedup_ratio(4.0, 0.0) is None
+    with pytest.raises(ValueError, match="timings"):
+        speedup_ratio(4.0, -0.1)
 
 
 def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:

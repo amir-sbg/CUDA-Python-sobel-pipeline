@@ -10,7 +10,7 @@ from .cpu import sobel_edges
 from .cuda import benchmark_gpu, cuda_available
 from .data import generate_image
 from .io import load_grayscale, save_grayscale
-from .metrics import comparison_metrics, edge_statistics
+from .metrics import comparison_metrics, edge_statistics, speedup_ratio
 
 
 def _benchmark_cpu(image, iterations: int) -> tuple[object, float]:
@@ -61,7 +61,7 @@ def run(
         )
         report["backend"] = "cuda"
         report["gpu_kernel_average_ms"] = gpu_ms
-        report["speedup"] = cpu_ms / gpu_ms
+        report["speedup"] = speedup_ratio(cpu_ms, gpu_ms)
         report["comparison"] = comparison_metrics(cpu_output, output)
 
     report["edge_threshold"] = config.edge_threshold

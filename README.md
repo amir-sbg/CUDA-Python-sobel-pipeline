@@ -58,7 +58,7 @@ python -m gpu_edges.pipeline \
   --width 256
 ```
 
-The report contains the input shape, block dimensions, CPU time, GPU kernel time, speedup, CPU/GPU comparison error, and simple edge statistics such as mean magnitude and edge density. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution.
+The report contains the input shape, block dimensions, CPU time, GPU kernel time, speedup, CPU/GPU comparison error, and simple edge statistics such as mean magnitude and edge density. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution. On very small inputs, `speedup` may be `null` if the CUDA event timer reports a zero-duration kernel average.
 
 ## Project structure
 

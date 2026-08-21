@@ -24,3 +24,11 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
         "max_magnitude": float(np.max(values)),
         "edge_density": float(np.mean(values >= threshold)),
     }
+
+
+def speedup_ratio(cpu_ms: float, gpu_ms: float) -> float | None:
+    if cpu_ms < 0 or gpu_ms < 0:
+        raise ValueError("timings must not be negative")
+    if gpu_ms == 0:
+        return None
+    return cpu_ms / gpu_ms
