@@ -13,6 +13,7 @@ class PipelineConfig:
     block_y: int = 16
     iterations: int = 50
     edge_threshold: float = 0.20
+    edge_quantile: float | None = None
     output_path: Path = Path("outputs/sobel_edges.png")
     report_path: Path = Path("reports/run.json")
 
@@ -27,3 +28,5 @@ class PipelineConfig:
             raise ValueError("iterations must be at least 1")
         if self.edge_threshold < 0:
             raise ValueError("edge_threshold must not be negative")
+        if self.edge_quantile is not None and not 0.0 < self.edge_quantile < 1.0:
+            raise ValueError("edge_quantile must be between 0 and 1")

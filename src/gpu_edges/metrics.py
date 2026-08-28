@@ -43,6 +43,19 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def adaptive_threshold(edges: np.ndarray, quantile: float) -> float:
+    if not 0.0 < quantile < 1.0:
+        raise ValueError("quantile must be between 0 and 1")
+    values = np.asarray(edges, dtype=np.float64)
+    if values.ndim != 2:
+        raise ValueError("edges must be two-dimensional")
+    if values.size == 0:
+        raise ValueError("edges must not be empty")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("edges must contain only finite values")
+    return float(np.quantile(values, quantile))
+
+
 def speedup_ratio(cpu_ms: float, gpu_ms: float) -> float | None:
     if cpu_ms < 0 or gpu_ms < 0:
         raise ValueError("timings must not be negative")

@@ -45,6 +45,7 @@ python -m gpu_edges.pipeline \
   --block-y 16 \
   --iterations 50 \
   --edge-threshold 0.20 \
+  --edge-quantile 0.85 \
   --output outputs/edges.png \
   --report reports/run.json
 ```
@@ -58,7 +59,7 @@ python -m gpu_edges.pipeline \
   --width 256
 ```
 
-The report contains the input shape, block dimensions, CPU time, GPU kernel time, speedup, CPU/GPU comparison error, and simple edge statistics such as mean magnitude and edge density. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution. On very small inputs, `speedup` may be `null` if the CUDA event timer reports a zero-duration kernel average.
+The report contains the input shape, block dimensions, CPU time, GPU kernel time, speedup, CPU/GPU comparison error, and simple edge statistics such as mean magnitude and edge density. Use `--edge-threshold` for a fixed magnitude cutoff or `--edge-quantile` to choose the cutoff from the output distribution, which is useful when comparing images with different contrast. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution. On very small inputs, `speedup` may be `null` if the CUDA event timer reports a zero-duration kernel average.
 
 ## Project structure
 

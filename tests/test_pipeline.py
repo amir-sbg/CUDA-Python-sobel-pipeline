@@ -7,7 +7,12 @@ from gpu_edges.config import PipelineConfig
 from gpu_edges.cpu import sobel_edges
 from gpu_edges.cuda import benchmark_gpu, cuda_available, sobel_edges_gpu
 from gpu_edges.data import generate_image
-from gpu_edges.metrics import comparison_metrics, edge_statistics, speedup_ratio
+from gpu_edges.metrics import (
+    adaptive_threshold,
+    comparison_metrics,
+    edge_statistics,
+    speedup_ratio,
+)
 from gpu_edges.pipeline import run
 
 
@@ -64,6 +69,17 @@ def test_edge_statistics_rejects_non_finite_values() -> None:
         edge_statistics(np.array([[0.0, np.inf]], dtype=np.float32))
 
 
+def test_adaptive_threshold_uses_requested_quantile() -> None:
+    edges = np.array([[0.0, 0.1], [0.4, 0.8]], dtype=np.float32)
+
+    assert adaptive_threshold(edges, 0.75) == pytest.approx(float(np.quantile(edges, 0.75)))
+
+
+def test_adaptive_threshold_rejects_bad_quantile() -> None:
+    with pytest.raises(ValueError, match="quantile"):
+        adaptive_threshold(np.ones((3, 3)), 1.0)
+
+
 def test_speedup_ratio_handles_zero_gpu_time() -> None:
     assert speedup_ratio(4.0, 2.0) == 2.0
     assert speedup_ratio(4.0, 0.0) is None
@@ -89,6 +105,24 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert config.report_path.exists()
 
 
+def test_cpu_pipeline_reports_adaptive_threshold(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=2,
+        edge_threshold=0.1,
+        edge_quantile=0.80,
+        output_path=tmp_path / "edges.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    report = run(config, cpu_only=True)
+
+    assert report["edge_quantile"] == 0.80
+    assert report["edge_threshold"] != 0.1
+    assert 0.0 <= report["edge_statistics"]["edge_density"] <= 1.0
+
+
 def test_config_rejects_oversized_blocks() -> None:
     with pytest.raises(ValueError, match="1024"):
         PipelineConfig(block_x=33, block_y=32)
@@ -97,6 +131,11 @@ def test_config_rejects_oversized_blocks() -> None:
 def test_config_rejects_negative_edge_threshold() -> None:
     with pytest.raises(ValueError, match="edge_threshold"):
         PipelineConfig(edge_threshold=-0.1)
+
+
+def test_config_rejects_bad_edge_quantile() -> None:
+    with pytest.raises(ValueError, match="edge_quantile"):
+        PipelineConfig(edge_quantile=1.0)
 
 
 def test_cuda_availability_returns_a_boolean() -> None:
