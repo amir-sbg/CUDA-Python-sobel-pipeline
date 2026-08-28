@@ -36,6 +36,13 @@ def test_comparison_metrics_report_zero_for_matching_arrays() -> None:
     }
 
 
+def test_comparison_metrics_reject_bad_arrays() -> None:
+    with pytest.raises(ValueError, match="same shape"):
+        comparison_metrics(np.ones((3, 3)), np.ones((3, 2)))
+    with pytest.raises(ValueError, match="finite"):
+        comparison_metrics(np.ones((3, 3)), np.full((3, 3), np.nan))
+
+
 def test_edge_statistics_report_density_and_magnitude() -> None:
     edges = np.array(
         [
@@ -50,6 +57,11 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
     assert stats["edge_density"] == 0.5
     assert stats["max_magnitude"] == pytest.approx(0.8)
     assert stats["mean_magnitude"] == pytest.approx(float(edges.mean()))
+
+
+def test_edge_statistics_rejects_non_finite_values() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        edge_statistics(np.array([[0.0, np.inf]], dtype=np.float32))
 
 
 def test_speedup_ratio_handles_zero_gpu_time() -> None:
