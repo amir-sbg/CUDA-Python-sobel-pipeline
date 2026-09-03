@@ -15,6 +15,7 @@ class PipelineConfig:
     edge_threshold: float = 0.20
     edge_quantile: float | None = None
     output_path: Path = Path("outputs/sobel_edges.png")
+    mask_output_path: Path | None = None
     report_path: Path = Path("reports/run.json")
 
     def __post_init__(self) -> None:

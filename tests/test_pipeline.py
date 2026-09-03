@@ -10,6 +10,7 @@ from gpu_edges.data import generate_image
 from gpu_edges.metrics import (
     adaptive_threshold,
     comparison_metrics,
+    edge_mask,
     edge_orientation_histogram,
     edge_statistics,
     speedup_ratio,
@@ -73,6 +74,14 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
     assert stats["edge_density"] == 0.5
     assert stats["max_magnitude"] == pytest.approx(0.8)
     assert stats["mean_magnitude"] == pytest.approx(float(edges.mean()))
+
+
+def test_edge_mask_thresholds_magnitude_image() -> None:
+    edges = np.array([[0.0, 0.2], [0.5, 0.7]], dtype=np.float32)
+
+    mask = edge_mask(edges, threshold=0.5)
+
+    np.testing.assert_array_equal(mask, np.array([[0.0, 0.0], [1.0, 1.0]], dtype=np.float32))
 
 
 def test_edge_statistics_rejects_non_finite_values() -> None:
@@ -153,6 +162,22 @@ def test_cpu_pipeline_reports_adaptive_threshold(tmp_path) -> None:
     assert report["edge_quantile"] == 0.80
     assert report["edge_threshold"] != 0.1
     assert 0.0 <= report["edge_statistics"]["edge_density"] <= 1.0
+
+
+def test_cpu_pipeline_can_write_binary_edge_mask(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=2,
+        output_path=tmp_path / "edges.png",
+        mask_output_path=tmp_path / "mask.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    report = run(config, cpu_only=True)
+
+    assert report["mask_output"] == str(config.mask_output_path)
+    assert config.mask_output_path.exists()
 
 
 def test_config_rejects_oversized_blocks() -> None:

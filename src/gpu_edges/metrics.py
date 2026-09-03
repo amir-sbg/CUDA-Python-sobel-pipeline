@@ -43,6 +43,17 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def edge_mask(edges: np.ndarray, threshold: float) -> np.ndarray:
+    if threshold < 0:
+        raise ValueError("threshold must not be negative")
+    values = np.asarray(edges, dtype=np.float32)
+    if values.ndim != 2:
+        raise ValueError("edges must be two-dimensional")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("edges must contain only finite values")
+    return (values >= threshold).astype(np.float32)
+
+
 def edge_orientation_histogram(
     horizontal: np.ndarray,
     vertical: np.ndarray,

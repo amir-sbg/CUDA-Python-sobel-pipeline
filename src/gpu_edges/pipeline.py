@@ -13,6 +13,7 @@ from .io import load_grayscale, save_grayscale
 from .metrics import (
     adaptive_threshold,
     comparison_metrics,
+    edge_mask,
     edge_orientation_histogram,
     edge_statistics,
     speedup_ratio,
@@ -97,6 +98,9 @@ def run(
         threshold,
     )
     save_grayscale(_normalize(output), config.output_path)
+    if config.mask_output_path is not None:
+        save_grayscale(edge_mask(output, threshold), config.mask_output_path)
+        report["mask_output"] = str(config.mask_output_path)
     config.report_path.parent.mkdir(parents=True, exist_ok=True)
     config.report_path.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
@@ -115,6 +119,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--edge-threshold", type=float, default=0.20)
     parser.add_argument("--edge-quantile", type=float)
     parser.add_argument("--output", type=Path, default=Path("outputs/sobel_edges.png"))
+    parser.add_argument("--mask-output", type=Path)
     parser.add_argument("--report", type=Path, default=Path("reports/run.json"))
     parser.add_argument("--cpu-only", action="store_true")
     return parser
@@ -125,6 +130,7 @@ def config_from_args(args: argparse.Namespace) -> PipelineConfig:
     values.pop("input", None)
     values.pop("cpu_only", None)
     values["output_path"] = values.pop("output")
+    values["mask_output_path"] = values.pop("mask_output")
     values["report_path"] = values.pop("report")
     return PipelineConfig(**values)
 
