@@ -4,6 +4,11 @@ import numpy as np
 
 
 def sobel_edges(image: np.ndarray) -> np.ndarray:
+    _, _, edges = sobel_components(image)
+    return edges.astype(np.float32)
+
+
+def sobel_components(image: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     values = np.asarray(image, dtype=np.float32)
     if values.ndim != 2:
         raise ValueError("Sobel input must be a two-dimensional grayscale image")
@@ -19,6 +24,14 @@ def sobel_edges(image: np.ndarray) -> np.ndarray:
     horizontal = -top_left + top_right - 2 * left + 2 * right - bottom_left + bottom_right
     vertical = -top_left - 2 * top - top_right + bottom_left + 2 * bottom + bottom_right
     edges = np.sqrt(horizontal**2 + vertical**2)
+    horizontal[[0, -1], :] = 0.0
+    horizontal[:, [0, -1]] = 0.0
+    vertical[[0, -1], :] = 0.0
+    vertical[:, [0, -1]] = 0.0
     edges[[0, -1], :] = 0.0
     edges[:, [0, -1]] = 0.0
-    return edges.astype(np.float32)
+    return (
+        horizontal.astype(np.float32),
+        vertical.astype(np.float32),
+        edges.astype(np.float32),
+    )

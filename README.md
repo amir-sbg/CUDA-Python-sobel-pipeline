@@ -59,7 +59,7 @@ python -m gpu_edges.pipeline \
   --width 256
 ```
 
-The report contains the input shape, block dimensions, CPU time, GPU kernel time, megapixels/sec throughput, speedup, CPU/GPU comparison error, and simple edge statistics such as mean magnitude and edge density. Use `--edge-threshold` for a fixed magnitude cutoff or `--edge-quantile` to choose the cutoff from the output distribution, which is useful when comparing images with different contrast. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution. On very small inputs, `speedup` may be `null` if the CUDA event timer reports a zero-duration kernel average.
+The report contains the input shape, block dimensions, CPU time, GPU kernel time, megapixels/sec throughput, speedup, CPU/GPU comparison error, and edge statistics such as mean magnitude, edge density, and an orientation histogram. Use `--edge-threshold` for a fixed magnitude cutoff or `--edge-quantile` to choose the cutoff from the output distribution, which is useful when comparing images with different contrast. Device transfers are outside the GPU timing region so the reported GPU value measures kernel execution. On very small inputs, `speedup` may be `null` if the CUDA event timer reports a zero-duration kernel average.
 
 ## Project structure
 
@@ -68,7 +68,7 @@ The report contains the input shape, block dimensions, CPU time, GPU kernel time
 ├── src/gpu_edges/
 │   ├── kernels/sobel.cu  # CUDA Sobel kernel
 │   ├── cuda.py           # CuPy RawKernel bridge and timing
-│   ├── cpu.py            # NumPy reference implementation
+│   ├── cpu.py            # NumPy reference implementation and Sobel components
 │   ├── data.py           # deterministic synthetic input
 │   ├── io.py             # grayscale image loading and saving
 │   ├── metrics.py        # CPU/GPU comparison metrics

@@ -4,12 +4,13 @@ import numpy as np
 import pytest
 
 from gpu_edges.config import PipelineConfig
-from gpu_edges.cpu import sobel_edges
+from gpu_edges.cpu import sobel_components, sobel_edges
 from gpu_edges.cuda import benchmark_gpu, cuda_available, sobel_edges_gpu
 from gpu_edges.data import generate_image
 from gpu_edges.metrics import (
     adaptive_threshold,
     comparison_metrics,
+    edge_orientation_histogram,
     edge_statistics,
     speedup_ratio,
     throughput_mpix_per_second,
@@ -32,6 +33,15 @@ def test_cpu_sobel_preserves_shape_and_zero_border() -> None:
     assert np.all(edges[[0, -1], :] == 0)
     assert np.all(edges[:, [0, -1]] == 0)
     assert np.isfinite(edges).all()
+
+
+def test_cpu_sobel_components_match_magnitude_output() -> None:
+    image = generate_image(20, 18)
+    horizontal, vertical, magnitude = sobel_components(image)
+
+    assert horizontal.shape == image.shape
+    assert vertical.shape == image.shape
+    np.testing.assert_allclose(magnitude, sobel_edges(image))
 
 
 def test_comparison_metrics_report_zero_for_matching_arrays() -> None:
@@ -68,6 +78,18 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
 def test_edge_statistics_rejects_non_finite_values() -> None:
     with pytest.raises(ValueError, match="finite"):
         edge_statistics(np.array([[0.0, np.inf]], dtype=np.float32))
+
+
+def test_edge_orientation_histogram_counts_active_edges() -> None:
+    horizontal = np.array([[1.0, 0.0], [1.0, 0.0]], dtype=np.float32)
+    vertical = np.array([[0.0, 1.0], [0.0, 1.0]], dtype=np.float32)
+    magnitude = np.ones((2, 2), dtype=np.float32)
+
+    rows = edge_orientation_histogram(horizontal, vertical, magnitude, threshold=0.5, bins=2)
+
+    assert len(rows) == 2
+    assert sum(row["count"] for row in rows) == 4
+    assert sum(row["fraction"] for row in rows) == pytest.approx(1.0)
 
 
 def test_adaptive_threshold_uses_requested_quantile() -> None:
@@ -110,6 +132,7 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert report["cpu_throughput_mpix_per_s"] > 0
     assert report["edge_threshold"] == config.edge_threshold
     assert "edge_density" in report["edge_statistics"]
+    assert len(report["edge_orientation_histogram"]) == 8
     assert config.output_path.exists()
     assert config.report_path.exists()
 

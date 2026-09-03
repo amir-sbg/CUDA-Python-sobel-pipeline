@@ -6,13 +6,14 @@ from pathlib import Path
 from time import perf_counter
 
 from .config import PipelineConfig
-from .cpu import sobel_edges
+from .cpu import sobel_components, sobel_edges
 from .cuda import benchmark_gpu, cuda_available
 from .data import generate_image
 from .io import load_grayscale, save_grayscale
 from .metrics import (
     adaptive_threshold,
     comparison_metrics,
+    edge_orientation_histogram,
     edge_statistics,
     speedup_ratio,
     throughput_mpix_per_second,
@@ -88,6 +89,13 @@ def run(
     report["edge_threshold"] = threshold
     report["edge_quantile"] = config.edge_quantile
     report["edge_statistics"] = edge_statistics(output, threshold)
+    horizontal, vertical, reference_magnitude = sobel_components(image)
+    report["edge_orientation_histogram"] = edge_orientation_histogram(
+        horizontal,
+        vertical,
+        reference_magnitude,
+        threshold,
+    )
     save_grayscale(_normalize(output), config.output_path)
     config.report_path.parent.mkdir(parents=True, exist_ok=True)
     config.report_path.write_text(json.dumps(report, indent=2) + "\n")

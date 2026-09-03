@@ -43,6 +43,49 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def edge_orientation_histogram(
+    horizontal: np.ndarray,
+    vertical: np.ndarray,
+    magnitude: np.ndarray,
+    threshold: float,
+    bins: int = 8,
+) -> list[dict[str, float | int]]:
+    gx, gy = _validated_pair(horizontal, vertical)
+    _, mag = _validated_pair(horizontal, magnitude)
+    if threshold < 0:
+        raise ValueError("threshold must not be negative")
+    if bins < 1:
+        raise ValueError("bins must be positive")
+
+    active = mag >= threshold
+    if not np.any(active):
+        return [
+            {
+                "bin": index + 1,
+                "start_degrees": float(index * 180.0 / bins),
+                "end_degrees": float((index + 1) * 180.0 / bins),
+                "count": 0,
+                "fraction": 0.0,
+            }
+            for index in range(bins)
+        ]
+
+    angles = np.degrees(np.arctan2(gy[active], gx[active]))
+    angles = np.mod(angles, 180.0)
+    counts, edges = np.histogram(angles, bins=bins, range=(0.0, 180.0))
+    total = int(np.sum(counts))
+    return [
+        {
+            "bin": index + 1,
+            "start_degrees": float(edges[index]),
+            "end_degrees": float(edges[index + 1]),
+            "count": int(count),
+            "fraction": float(count / total) if total else 0.0,
+        }
+        for index, count in enumerate(counts)
+    ]
+
+
 def adaptive_threshold(edges: np.ndarray, quantile: float) -> float:
     if not 0.0 < quantile < 1.0:
         raise ValueError("quantile must be between 0 and 1")
