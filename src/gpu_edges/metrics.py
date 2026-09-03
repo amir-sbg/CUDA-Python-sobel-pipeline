@@ -62,3 +62,14 @@ def speedup_ratio(cpu_ms: float, gpu_ms: float) -> float | None:
     if gpu_ms == 0:
         return None
     return cpu_ms / gpu_ms
+
+
+def throughput_mpix_per_second(height: int, width: int, elapsed_ms: float) -> float | None:
+    if height < 1 or width < 1:
+        raise ValueError("height and width must be positive")
+    if elapsed_ms < 0:
+        raise ValueError("elapsed_ms must not be negative")
+    if elapsed_ms == 0:
+        return None
+    pixels = height * width
+    return pixels / 1_000_000.0 / (elapsed_ms / 1000.0)

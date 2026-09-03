@@ -10,7 +10,13 @@ from .cpu import sobel_edges
 from .cuda import benchmark_gpu, cuda_available
 from .data import generate_image
 from .io import load_grayscale, save_grayscale
-from .metrics import adaptive_threshold, comparison_metrics, edge_statistics, speedup_ratio
+from .metrics import (
+    adaptive_threshold,
+    comparison_metrics,
+    edge_statistics,
+    speedup_ratio,
+    throughput_mpix_per_second,
+)
 
 
 def _benchmark_cpu(image, iterations: int) -> tuple[object, float]:
@@ -46,6 +52,11 @@ def run(
         "block": [config.block_x, config.block_y],
         "iterations": config.iterations,
         "cpu_average_ms": cpu_ms,
+        "cpu_throughput_mpix_per_s": throughput_mpix_per_second(
+            image.shape[0],
+            image.shape[1],
+            cpu_ms,
+        ),
     }
 
     if not cpu_only and not cuda_available():
@@ -62,6 +73,11 @@ def run(
         report["backend"] = "cuda"
         report["gpu_kernel_average_ms"] = gpu_ms
         report["speedup"] = speedup_ratio(cpu_ms, gpu_ms)
+        report["gpu_kernel_throughput_mpix_per_s"] = throughput_mpix_per_second(
+            image.shape[0],
+            image.shape[1],
+            gpu_ms,
+        )
         report["comparison"] = comparison_metrics(cpu_output, output)
 
     threshold = (

@@ -12,6 +12,7 @@ from gpu_edges.metrics import (
     comparison_metrics,
     edge_statistics,
     speedup_ratio,
+    throughput_mpix_per_second,
 )
 from gpu_edges.pipeline import run
 
@@ -87,6 +88,13 @@ def test_speedup_ratio_handles_zero_gpu_time() -> None:
         speedup_ratio(4.0, -0.1)
 
 
+def test_throughput_reports_megapixels_per_second() -> None:
+    assert throughput_mpix_per_second(1000, 1000, 2.0) == pytest.approx(500.0)
+    assert throughput_mpix_per_second(1000, 1000, 0.0) is None
+    with pytest.raises(ValueError, match="height"):
+        throughput_mpix_per_second(0, 100, 1.0)
+
+
 def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     config = PipelineConfig(
         height=32,
@@ -99,6 +107,7 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert report["backend"] == "cpu"
     assert report["input_source"] == "generated"
     assert report["input_dtype"] == "float32"
+    assert report["cpu_throughput_mpix_per_s"] > 0
     assert report["edge_threshold"] == config.edge_threshold
     assert "edge_density" in report["edge_statistics"]
     assert config.output_path.exists()
