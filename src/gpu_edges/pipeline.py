@@ -9,6 +9,7 @@ from .config import PipelineConfig
 from .cpu import sobel_components, sobel_edges
 from .cuda import benchmark_gpu, cuda_available
 from .data import generate_image
+from .filters import gaussian_blur
 from .io import load_grayscale, save_grayscale
 from .metrics import (
     adaptive_threshold,
@@ -45,6 +46,7 @@ def run(
         config.width,
         config.seed,
     )
+    image = gaussian_blur(image, config.blur_sigma)
     cpu_output, cpu_ms = _benchmark_cpu(image, config.iterations)
     report = {
         "backend": "cpu",
@@ -53,6 +55,7 @@ def run(
         "input_dtype": str(image.dtype),
         "block": [config.block_x, config.block_y],
         "iterations": config.iterations,
+        "blur_sigma": config.blur_sigma,
         "cpu_average_ms": cpu_ms,
         "cpu_throughput_mpix_per_s": throughput_mpix_per_second(
             image.shape[0],
@@ -116,6 +119,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--block-x", type=int, default=16)
     parser.add_argument("--block-y", type=int, default=16)
     parser.add_argument("--iterations", type=int, default=50)
+    parser.add_argument("--blur-sigma", type=float, default=0.0)
     parser.add_argument("--edge-threshold", type=float, default=0.20)
     parser.add_argument("--edge-quantile", type=float)
     parser.add_argument("--output", type=Path, default=Path("outputs/sobel_edges.png"))

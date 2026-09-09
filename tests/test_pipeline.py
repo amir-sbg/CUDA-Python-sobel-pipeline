@@ -7,6 +7,7 @@ from gpu_edges.config import PipelineConfig
 from gpu_edges.cpu import sobel_components, sobel_edges
 from gpu_edges.cuda import benchmark_gpu, cuda_available, sobel_edges_gpu
 from gpu_edges.data import generate_image
+from gpu_edges.filters import gaussian_blur
 from gpu_edges.metrics import (
     adaptive_threshold,
     comparison_metrics,
@@ -43,6 +44,25 @@ def test_cpu_sobel_components_match_magnitude_output() -> None:
     assert horizontal.shape == image.shape
     assert vertical.shape == image.shape
     np.testing.assert_allclose(magnitude, sobel_edges(image))
+
+
+def test_gaussian_blur_preserves_shape_and_reduces_impulse() -> None:
+    image = np.zeros((9, 9), dtype=np.float32)
+    image[4, 4] = 1.0
+
+    blurred = gaussian_blur(image, sigma=1.0)
+
+    assert blurred.shape == image.shape
+    assert blurred.dtype == np.float32
+    assert 0 < blurred[4, 4] < 1.0
+    assert blurred[4, 3] > 0
+
+
+def test_gaussian_blur_rejects_bad_inputs() -> None:
+    with pytest.raises(ValueError, match="sigma"):
+        gaussian_blur(np.ones((4, 4), dtype=np.float32), sigma=-0.1)
+    with pytest.raises(ValueError, match="two-dimensional"):
+        gaussian_blur(np.ones((4, 4, 1), dtype=np.float32), sigma=1.0)
 
 
 def test_comparison_metrics_report_zero_for_matching_arrays() -> None:
@@ -164,6 +184,22 @@ def test_cpu_pipeline_reports_adaptive_threshold(tmp_path) -> None:
     assert 0.0 <= report["edge_statistics"]["edge_density"] <= 1.0
 
 
+def test_cpu_pipeline_reports_blur_setting(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=2,
+        blur_sigma=0.8,
+        output_path=tmp_path / "edges.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    report = run(config, cpu_only=True)
+
+    assert report["blur_sigma"] == 0.8
+    assert config.report_path.exists()
+
+
 def test_cpu_pipeline_can_write_binary_edge_mask(tmp_path) -> None:
     config = PipelineConfig(
         height=32,
@@ -188,6 +224,11 @@ def test_config_rejects_oversized_blocks() -> None:
 def test_config_rejects_negative_edge_threshold() -> None:
     with pytest.raises(ValueError, match="edge_threshold"):
         PipelineConfig(edge_threshold=-0.1)
+
+
+def test_config_rejects_negative_blur_sigma() -> None:
+    with pytest.raises(ValueError, match="blur_sigma"):
+        PipelineConfig(blur_sigma=-0.1)
 
 
 def test_config_rejects_bad_edge_quantile() -> None:

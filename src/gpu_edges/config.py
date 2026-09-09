@@ -12,6 +12,7 @@ class PipelineConfig:
     block_x: int = 16
     block_y: int = 16
     iterations: int = 50
+    blur_sigma: float = 0.0
     edge_threshold: float = 0.20
     edge_quantile: float | None = None
     output_path: Path = Path("outputs/sobel_edges.png")
@@ -27,6 +28,8 @@ class PipelineConfig:
             raise ValueError("CUDA blocks cannot contain more than 1024 threads")
         if self.iterations < 1:
             raise ValueError("iterations must be at least 1")
+        if self.blur_sigma < 0:
+            raise ValueError("blur_sigma must not be negative")
         if self.edge_threshold < 0:
             raise ValueError("edge_threshold must not be negative")
         if self.edge_quantile is not None and not 0.0 < self.edge_quantile < 1.0:
