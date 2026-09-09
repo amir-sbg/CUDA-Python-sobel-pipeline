@@ -7,7 +7,7 @@ from time import perf_counter
 
 from .config import PipelineConfig
 from .cpu import sobel_components, sobel_edges
-from .cuda import benchmark_gpu, cuda_available
+from .cuda import benchmark_gpu, cuda_available, launch_shape
 from .data import generate_image
 from .filters import gaussian_blur
 from .io import load_grayscale, save_grayscale
@@ -55,6 +55,12 @@ def run(
         "input_shape": list(image.shape),
         "input_dtype": str(image.dtype),
         "block": [config.block_x, config.block_y],
+        "launch": launch_shape(
+            image.shape[0],
+            image.shape[1],
+            config.block_x,
+            config.block_y,
+        ),
         "iterations": config.iterations,
         "blur_sigma": config.blur_sigma,
         "cpu_average_ms": cpu_ms,

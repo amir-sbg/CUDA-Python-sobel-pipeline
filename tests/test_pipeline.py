@@ -5,7 +5,7 @@ import pytest
 
 from gpu_edges.config import PipelineConfig
 from gpu_edges.cpu import sobel_components, sobel_edges
-from gpu_edges.cuda import benchmark_gpu, cuda_available, sobel_edges_gpu
+from gpu_edges.cuda import benchmark_gpu, cuda_available, launch_shape, sobel_edges_gpu
 from gpu_edges.data import generate_image
 from gpu_edges.filters import gaussian_blur
 from gpu_edges.metrics import (
@@ -153,6 +153,16 @@ def test_speedup_ratio_handles_zero_gpu_time() -> None:
         speedup_ratio(4.0, -0.1)
 
 
+def test_launch_shape_reports_grid_geometry() -> None:
+    shape = launch_shape(height=33, width=65, block_x=16, block_y=8)
+
+    assert shape["blocks_x"] == 5
+    assert shape["blocks_y"] == 5
+    assert shape["threads_per_block"] == 128
+    assert shape["total_blocks"] == 25
+    assert shape["scheduled_threads"] == 3200
+
+
 def test_throughput_reports_megapixels_per_second() -> None:
     assert throughput_mpix_per_second(1000, 1000, 2.0) == pytest.approx(500.0)
     assert throughput_mpix_per_second(1000, 1000, 0.0) is None
@@ -172,6 +182,8 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert report["backend"] == "cpu"
     assert report["input_source"] == "generated"
     assert report["input_dtype"] == "float32"
+    assert report["launch"]["threads_per_block"] == config.block_x * config.block_y
+    assert report["launch"]["total_blocks"] == 4
     assert report["cpu_throughput_mpix_per_s"] > 0
     assert report["edge_threshold"] == config.edge_threshold
     assert "edge_density" in report["edge_statistics"]

@@ -49,12 +49,33 @@ def _validate_launch(
         raise ValueError("iterations must be at least 1")
 
 
+def launch_shape(
+    height: int,
+    width: int,
+    block_x: int = 16,
+    block_y: int = 16,
+) -> dict[str, int]:
+    if height < 3 or width < 3:
+        raise ValueError("image dimensions must be at least 3")
+    if not isinstance(block_x, Integral) or not isinstance(block_y, Integral):
+        raise ValueError("block dimensions must be integers")
+    if block_x < 1 or block_y < 1 or block_x * block_y > 1024:
+        raise ValueError("block dimensions must be positive and use at most 1024 threads")
+    blocks_x = (width + block_x - 1) // block_x
+    blocks_y = (height + block_y - 1) // block_y
+    return {
+        "blocks_x": int(blocks_x),
+        "blocks_y": int(blocks_y),
+        "threads_per_block": int(block_x * block_y),
+        "total_blocks": int(blocks_x * blocks_y),
+        "scheduled_threads": int(blocks_x * blocks_y * block_x * block_y),
+    }
+
+
 def _launch(kernel, image, output, block_x: int, block_y: int) -> None:
     height, width = image.shape
-    grid = (
-        (width + block_x - 1) // block_x,
-        (height + block_y - 1) // block_y,
-    )
+    shape = launch_shape(height, width, block_x, block_y)
+    grid = (shape["blocks_x"], shape["blocks_y"])
     kernel(
         grid,
         (block_x, block_y),
