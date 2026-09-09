@@ -17,6 +17,7 @@ from .metrics import (
     edge_mask,
     edge_orientation_histogram,
     edge_statistics,
+    non_maximum_suppression,
     speedup_ratio,
     throughput_mpix_per_second,
 )
@@ -100,6 +101,11 @@ def run(
         reference_magnitude,
         threshold,
     )
+    if config.nms_output_path is not None:
+        thinned = non_maximum_suppression(horizontal, vertical, reference_magnitude)
+        save_grayscale(_normalize(thinned), config.nms_output_path)
+        report["nms_output"] = str(config.nms_output_path)
+        report["nms_edge_statistics"] = edge_statistics(thinned, threshold)
     save_grayscale(_normalize(output), config.output_path)
     if config.mask_output_path is not None:
         save_grayscale(edge_mask(output, threshold), config.mask_output_path)
@@ -124,6 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--edge-quantile", type=float)
     parser.add_argument("--output", type=Path, default=Path("outputs/sobel_edges.png"))
     parser.add_argument("--mask-output", type=Path)
+    parser.add_argument("--nms-output", type=Path)
     parser.add_argument("--report", type=Path, default=Path("reports/run.json"))
     parser.add_argument("--cpu-only", action="store_true")
     return parser
@@ -135,6 +142,7 @@ def config_from_args(args: argparse.Namespace) -> PipelineConfig:
     values.pop("cpu_only", None)
     values["output_path"] = values.pop("output")
     values["mask_output_path"] = values.pop("mask_output")
+    values["nms_output_path"] = values.pop("nms_output")
     values["report_path"] = values.pop("report")
     return PipelineConfig(**values)
 

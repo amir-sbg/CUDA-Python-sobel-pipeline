@@ -97,6 +97,39 @@ def edge_orientation_histogram(
     ]
 
 
+def non_maximum_suppression(
+    horizontal: np.ndarray,
+    vertical: np.ndarray,
+    magnitude: np.ndarray,
+) -> np.ndarray:
+    gx, gy = _validated_pair(horizontal, vertical)
+    _, mag = _validated_pair(horizontal, magnitude)
+    if gx.ndim != 2:
+        raise ValueError("gradient inputs must be two-dimensional")
+
+    output = np.zeros_like(mag, dtype=np.float32)
+    angles = np.mod(np.degrees(np.arctan2(gy, gx)), 180.0)
+    height, width = mag.shape
+
+    for row in range(1, height - 1):
+        for col in range(1, width - 1):
+            angle = angles[row, col]
+            current = mag[row, col]
+            if angle < 22.5 or angle >= 157.5:
+                before, after = mag[row, col - 1], mag[row, col + 1]
+            elif angle < 67.5:
+                before, after = mag[row - 1, col + 1], mag[row + 1, col - 1]
+            elif angle < 112.5:
+                before, after = mag[row - 1, col], mag[row + 1, col]
+            else:
+                before, after = mag[row - 1, col - 1], mag[row + 1, col + 1]
+
+            if current >= before and current >= after:
+                output[row, col] = current
+
+    return output
+
+
 def adaptive_threshold(edges: np.ndarray, quantile: float) -> float:
     if not 0.0 < quantile < 1.0:
         raise ValueError("quantile must be between 0 and 1")

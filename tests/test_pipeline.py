@@ -14,6 +14,7 @@ from gpu_edges.metrics import (
     edge_mask,
     edge_orientation_histogram,
     edge_statistics,
+    non_maximum_suppression,
     speedup_ratio,
     throughput_mpix_per_second,
 )
@@ -121,6 +122,19 @@ def test_edge_orientation_histogram_counts_active_edges() -> None:
     assert sum(row["fraction"] for row in rows) == pytest.approx(1.0)
 
 
+def test_non_maximum_suppression_keeps_local_gradient_maxima() -> None:
+    horizontal = np.ones((5, 5), dtype=np.float32)
+    vertical = np.zeros((5, 5), dtype=np.float32)
+    magnitude = np.zeros((5, 5), dtype=np.float32)
+    magnitude[2, 1:4] = [0.4, 1.0, 0.6]
+
+    thinned = non_maximum_suppression(horizontal, vertical, magnitude)
+
+    assert thinned[2, 2] == pytest.approx(1.0)
+    assert thinned[2, 1] == 0.0
+    assert thinned[2, 3] == 0.0
+
+
 def test_adaptive_threshold_uses_requested_quantile() -> None:
     edges = np.array([[0.0, 0.1], [0.4, 0.8]], dtype=np.float32)
 
@@ -214,6 +228,23 @@ def test_cpu_pipeline_can_write_binary_edge_mask(tmp_path) -> None:
 
     assert report["mask_output"] == str(config.mask_output_path)
     assert config.mask_output_path.exists()
+
+
+def test_cpu_pipeline_can_write_nms_edge_map(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=2,
+        output_path=tmp_path / "edges.png",
+        nms_output_path=tmp_path / "nms.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    report = run(config, cpu_only=True)
+
+    assert report["nms_output"] == str(config.nms_output_path)
+    assert "nms_edge_statistics" in report
+    assert config.nms_output_path.exists()
 
 
 def test_config_rejects_oversized_blocks() -> None:
