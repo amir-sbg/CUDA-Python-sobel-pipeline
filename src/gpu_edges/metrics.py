@@ -3,6 +3,11 @@ from __future__ import annotations
 import numpy as np
 
 
+def _validate_threshold(threshold: float) -> None:
+    if not np.isfinite(threshold) or threshold < 0:
+        raise ValueError("threshold must be finite and not negative")
+
+
 def _validated_pair(reference: np.ndarray, candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     ref = np.asarray(reference, dtype=np.float64)
     got = np.asarray(candidate, dtype=np.float64)
@@ -29,8 +34,7 @@ def binary_edge_metrics(
     candidate: np.ndarray,
     threshold: float,
 ) -> dict[str, float]:
-    if threshold < 0:
-        raise ValueError("threshold must not be negative")
+    _validate_threshold(threshold)
     ref, got = _validated_pair(reference, candidate)
     reference_mask = ref >= threshold
     candidate_mask = got >= threshold
@@ -56,8 +60,7 @@ def binary_edge_metrics(
 
 
 def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, float]:
-    if threshold < 0:
-        raise ValueError("threshold must not be negative")
+    _validate_threshold(threshold)
     values = np.asarray(edges, dtype=np.float64)
     if values.ndim != 2:
         raise ValueError("edges must be two-dimensional")
@@ -75,8 +78,7 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
 
 
 def edge_mask(edges: np.ndarray, threshold: float) -> np.ndarray:
-    if threshold < 0:
-        raise ValueError("threshold must not be negative")
+    _validate_threshold(threshold)
     values = np.asarray(edges, dtype=np.float32)
     if values.ndim != 2:
         raise ValueError("edges must be two-dimensional")
@@ -94,8 +96,7 @@ def edge_orientation_histogram(
 ) -> list[dict[str, float | int]]:
     gx, gy = _validated_pair(horizontal, vertical)
     _, mag = _validated_pair(horizontal, magnitude)
-    if threshold < 0:
-        raise ValueError("threshold must not be negative")
+    _validate_threshold(threshold)
     if bins < 1:
         raise ValueError("bins must be positive")
 

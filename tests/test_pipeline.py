@@ -137,6 +137,8 @@ def test_edge_mask_thresholds_magnitude_image() -> None:
 def test_edge_statistics_rejects_non_finite_values() -> None:
     with pytest.raises(ValueError, match="finite"):
         edge_statistics(np.array([[0.0, np.inf]], dtype=np.float32))
+    with pytest.raises(ValueError, match="finite"):
+        edge_statistics(np.ones((2, 2)), threshold=np.nan)
 
 
 def test_edge_orientation_histogram_counts_active_edges() -> None:
@@ -306,6 +308,8 @@ def test_config_rejects_negative_blur_sigma() -> None:
 def test_config_rejects_bad_edge_quantile() -> None:
     with pytest.raises(ValueError, match="edge_quantile"):
         PipelineConfig(edge_quantile=1.0)
+    with pytest.raises(ValueError, match="edge_threshold"):
+        PipelineConfig(edge_threshold=np.nan)
 
 
 def test_cuda_availability_returns_a_boolean() -> None:

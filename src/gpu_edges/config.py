@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from pathlib import Path
 
 
@@ -29,9 +30,12 @@ class PipelineConfig:
             raise ValueError("CUDA blocks cannot contain more than 1024 threads")
         if self.iterations < 1:
             raise ValueError("iterations must be at least 1")
-        if self.blur_sigma < 0:
+        if not isfinite(self.blur_sigma) or self.blur_sigma < 0:
             raise ValueError("blur_sigma must not be negative")
-        if self.edge_threshold < 0:
+        if not isfinite(self.edge_threshold) or self.edge_threshold < 0:
             raise ValueError("edge_threshold must not be negative")
-        if self.edge_quantile is not None and not 0.0 < self.edge_quantile < 1.0:
+        if self.edge_quantile is not None and (
+            not isfinite(self.edge_quantile)
+            or not 0.0 < self.edge_quantile < 1.0
+        ):
             raise ValueError("edge_quantile must be between 0 and 1")
