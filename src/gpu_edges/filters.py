@@ -11,6 +11,8 @@ def gaussian_blur(image: np.ndarray, sigma: float = 0.0) -> np.ndarray:
     values = np.asarray(image, dtype=np.float32)
     if values.ndim != 2:
         raise ValueError("image must be two-dimensional")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("image must contain only finite values")
     if sigma == 0:
         return values.copy()
 

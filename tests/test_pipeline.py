@@ -64,6 +64,17 @@ def test_gaussian_blur_rejects_bad_inputs() -> None:
         gaussian_blur(np.ones((4, 4), dtype=np.float32), sigma=-0.1)
     with pytest.raises(ValueError, match="two-dimensional"):
         gaussian_blur(np.ones((4, 4, 1), dtype=np.float32), sigma=1.0)
+    invalid = np.ones((4, 4), dtype=np.float32)
+    invalid[1, 1] = np.nan
+    with pytest.raises(ValueError, match="finite"):
+        gaussian_blur(invalid, sigma=1.0)
+
+
+def test_cpu_sobel_rejects_non_finite_inputs() -> None:
+    image = np.ones((4, 4), dtype=np.float32)
+    image[1, 1] = np.inf
+    with pytest.raises(ValueError, match="finite"):
+        sobel_edges(image)
 
 
 def test_comparison_metrics_report_zero_for_matching_arrays() -> None:
@@ -288,3 +299,7 @@ def test_gpu_entrypoints_validate_inputs_before_device_check() -> None:
         sobel_edges_gpu(np.zeros((8, 8, 1), dtype=np.float32))
     with pytest.raises(ValueError, match="1024"):
         benchmark_gpu(np.zeros((8, 8), dtype=np.float32), 33, 32, 1)
+    invalid = np.ones((8, 8), dtype=np.float32)
+    invalid[0, 0] = np.nan
+    with pytest.raises(ValueError, match="finite"):
+        sobel_edges_gpu(invalid)

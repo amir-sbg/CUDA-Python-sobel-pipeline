@@ -12,6 +12,8 @@ def sobel_components(image: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndar
     values = np.asarray(image, dtype=np.float32)
     if values.ndim != 2:
         raise ValueError("Sobel input must be a two-dimensional grayscale image")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("Sobel input must contain only finite values")
     padded = np.pad(values, 1, mode="constant")
     top_left = padded[:-2, :-2]
     top = padded[:-2, 1:-1]

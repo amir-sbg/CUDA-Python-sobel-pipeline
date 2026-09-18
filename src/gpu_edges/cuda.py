@@ -41,6 +41,8 @@ def _validate_launch(
         raise ValueError("image must be two-dimensional")
     if min(values.shape) < 3:
         raise ValueError("image dimensions must be at least 3")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("image must contain only finite values")
     if not isinstance(block_x, Integral) or not isinstance(block_y, Integral):
         raise ValueError("block dimensions must be integers")
     if block_x < 1 or block_y < 1 or block_x * block_y > 1024:
