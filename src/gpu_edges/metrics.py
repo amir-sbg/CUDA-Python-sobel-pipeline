@@ -24,6 +24,37 @@ def comparison_metrics(reference: np.ndarray, candidate: np.ndarray) -> dict[str
     }
 
 
+def binary_edge_metrics(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    threshold: float,
+) -> dict[str, float]:
+    if threshold < 0:
+        raise ValueError("threshold must not be negative")
+    ref, got = _validated_pair(reference, candidate)
+    reference_mask = ref >= threshold
+    candidate_mask = got >= threshold
+    true_positive = int(np.count_nonzero(reference_mask & candidate_mask))
+    false_positive = int(np.count_nonzero(~reference_mask & candidate_mask))
+    false_negative = int(np.count_nonzero(reference_mask & ~candidate_mask))
+    predicted = true_positive + false_positive
+    actual = true_positive + false_negative
+    union = true_positive + false_positive + false_negative
+    precision = true_positive / predicted if predicted else 1.0
+    recall = true_positive / actual if actual else 1.0
+    f1 = (
+        2.0 * precision * recall / (precision + recall)
+        if precision + recall
+        else 1.0
+    )
+    return {
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1": float(f1),
+        "iou": float(true_positive / union if union else 1.0),
+    }
+
+
 def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, float]:
     if threshold < 0:
         raise ValueError("threshold must not be negative")

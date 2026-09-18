@@ -10,6 +10,7 @@ from gpu_edges.data import generate_image
 from gpu_edges.filters import gaussian_blur
 from gpu_edges.metrics import (
     adaptive_threshold,
+    binary_edge_metrics,
     comparison_metrics,
     edge_mask,
     edge_orientation_histogram,
@@ -90,6 +91,23 @@ def test_comparison_metrics_reject_bad_arrays() -> None:
         comparison_metrics(np.ones((3, 3)), np.ones((3, 2)))
     with pytest.raises(ValueError, match="finite"):
         comparison_metrics(np.ones((3, 3)), np.full((3, 3), np.nan))
+
+
+def test_binary_edge_metrics_report_overlap() -> None:
+    reference = np.array([[0.0, 1.0], [1.0, 0.0]])
+    candidate = np.array([[0.0, 1.0], [0.0, 1.0]])
+
+    metrics = binary_edge_metrics(reference, candidate, threshold=0.5)
+
+    assert metrics["precision"] == pytest.approx(0.5)
+    assert metrics["recall"] == pytest.approx(0.5)
+    assert metrics["f1"] == pytest.approx(0.5)
+    assert metrics["iou"] == pytest.approx(1.0 / 3.0)
+
+
+def test_binary_edge_metrics_handles_empty_edge_maps() -> None:
+    metrics = binary_edge_metrics(np.zeros((2, 2)), np.zeros((2, 2)), 0.5)
+    assert metrics == {"precision": 1.0, "recall": 1.0, "f1": 1.0, "iou": 1.0}
 
 
 def test_edge_statistics_report_density_and_magnitude() -> None:

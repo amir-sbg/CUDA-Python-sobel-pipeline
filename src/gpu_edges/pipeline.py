@@ -13,6 +13,7 @@ from .filters import gaussian_blur
 from .io import load_grayscale, save_grayscale
 from .metrics import (
     adaptive_threshold,
+    binary_edge_metrics,
     comparison_metrics,
     edge_mask,
     edge_orientation_histogram,
@@ -99,6 +100,12 @@ def run(
     )
     report["edge_threshold"] = threshold
     report["edge_quantile"] = config.edge_quantile
+    if "comparison" in report:
+        report["binary_edge_comparison"] = binary_edge_metrics(
+            cpu_output,
+            output,
+            threshold,
+        )
     report["edge_statistics"] = edge_statistics(output, threshold)
     horizontal, vertical, reference_magnitude = sobel_components(image)
     report["edge_orientation_histogram"] = edge_orientation_histogram(
