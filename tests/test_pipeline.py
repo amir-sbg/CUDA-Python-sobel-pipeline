@@ -18,6 +18,7 @@ from gpu_edges.metrics import (
     edge_statistics,
     gradient_energy,
     non_maximum_suppression,
+    nms_reduction_ratio,
     speedup_ratio,
     throughput_mpix_per_second,
 )
@@ -189,6 +190,13 @@ def test_non_maximum_suppression_keeps_local_gradient_maxima() -> None:
     assert thinned[2, 3] == 0.0
 
 
+def test_nms_reduction_ratio_counts_removed_edges() -> None:
+    before = np.array([[0.0, 0.5], [0.7, 0.9]], dtype=np.float32)
+    after = np.array([[0.0, 0.0], [0.7, 0.0]], dtype=np.float32)
+
+    assert nms_reduction_ratio(before, after, threshold=0.5) == pytest.approx(2 / 3)
+
+
 def test_adaptive_threshold_uses_requested_quantile() -> None:
     edges = np.array([[0.0, 0.1], [0.4, 0.8]], dtype=np.float32)
 
@@ -312,6 +320,7 @@ def test_cpu_pipeline_can_write_nms_edge_map(tmp_path) -> None:
 
     assert report["nms_output"] == str(config.nms_output_path)
     assert "nms_edge_statistics" in report
+    assert 0.0 <= report["nms_reduction_ratio"] <= 1.0
     assert config.nms_output_path.exists()
 
 

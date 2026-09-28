@@ -188,6 +188,16 @@ def non_maximum_suppression(
     return output
 
 
+def nms_reduction_ratio(before: np.ndarray, after: np.ndarray, threshold: float) -> float:
+    _validate_threshold(threshold)
+    ref, got = _validated_pair(before, after)
+    before_edges = int(np.count_nonzero(ref >= threshold))
+    after_edges = int(np.count_nonzero(got >= threshold))
+    if before_edges == 0:
+        return 0.0
+    return float(1.0 - after_edges / before_edges)
+
+
 def adaptive_threshold(edges: np.ndarray, quantile: float) -> float:
     if not 0.0 < quantile < 1.0:
         raise ValueError("quantile must be between 0 and 1")

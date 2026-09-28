@@ -21,6 +21,7 @@ from .metrics import (
     edge_statistics,
     gradient_energy,
     non_maximum_suppression,
+    nms_reduction_ratio,
     speedup_ratio,
     throughput_mpix_per_second,
 )
@@ -123,6 +124,11 @@ def run(
         save_grayscale(_normalize(thinned), config.nms_output_path)
         report["nms_output"] = str(config.nms_output_path)
         report["nms_edge_statistics"] = edge_statistics(thinned, threshold)
+        report["nms_reduction_ratio"] = nms_reduction_ratio(
+            reference_magnitude,
+            thinned,
+            threshold,
+        )
     save_grayscale(_normalize(output), config.output_path)
     if config.mask_output_path is not None:
         save_grayscale(edge_mask(output, threshold), config.mask_output_path)
