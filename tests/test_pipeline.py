@@ -14,6 +14,7 @@ from gpu_edges.metrics import (
     comparison_metrics,
     edge_mask,
     edge_orientation_histogram,
+    edge_quality_flags,
     edge_statistics,
     gradient_energy,
     non_maximum_suppression,
@@ -136,6 +137,16 @@ def test_gradient_energy_reports_directional_fraction() -> None:
     assert report["mean_gradient_energy"] == pytest.approx(1.75)
     assert report["max_gradient_energy"] == pytest.approx(4.0)
     assert report["horizontal_energy_fraction"] == pytest.approx(5 / 7)
+
+
+def test_edge_quality_flags_warn_on_bad_thresholds() -> None:
+    assert edge_quality_flags({"edge_density": 0.0, "max_magnitude": 0.0}) == [
+        "very_sparse_edges",
+        "zero_gradient_image",
+    ]
+    assert edge_quality_flags({"edge_density": 0.75, "max_magnitude": 1.0}) == [
+        "very_dense_edges"
+    ]
 
 
 def test_edge_mask_thresholds_magnitude_image() -> None:

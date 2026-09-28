@@ -77,6 +77,18 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def edge_quality_flags(stats: dict[str, float]) -> list[str]:
+    density = float(stats.get("edge_density", 0.0))
+    flags = []
+    if density < 0.01:
+        flags.append("very_sparse_edges")
+    if density > 0.50:
+        flags.append("very_dense_edges")
+    if float(stats.get("max_magnitude", 0.0)) <= 0.0:
+        flags.append("zero_gradient_image")
+    return flags
+
+
 def gradient_energy(horizontal: np.ndarray, vertical: np.ndarray) -> dict[str, float]:
     gx, gy = _validated_pair(horizontal, vertical)
     if gx.ndim != 2:
