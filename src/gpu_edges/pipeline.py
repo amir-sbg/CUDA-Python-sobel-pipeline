@@ -18,6 +18,7 @@ from .metrics import (
     edge_mask,
     edge_orientation_histogram,
     edge_statistics,
+    gradient_energy,
     non_maximum_suppression,
     speedup_ratio,
     throughput_mpix_per_second,
@@ -108,6 +109,7 @@ def run(
         )
     report["edge_statistics"] = edge_statistics(output, threshold)
     horizontal, vertical, reference_magnitude = sobel_components(image)
+    report["gradient_energy"] = gradient_energy(horizontal, vertical)
     report["edge_orientation_histogram"] = edge_orientation_histogram(
         horizontal,
         vertical,

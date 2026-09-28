@@ -230,6 +230,7 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert report["cpu_throughput_mpix_per_s"] > 0
     assert report["edge_threshold"] == config.edge_threshold
     assert "edge_density" in report["edge_statistics"]
+    assert "mean_gradient_energy" in report["gradient_energy"]
     assert len(report["edge_orientation_histogram"]) == 8
     assert config.output_path.exists()
     assert config.report_path.exists()
