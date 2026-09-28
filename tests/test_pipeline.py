@@ -15,6 +15,7 @@ from gpu_edges.metrics import (
     edge_mask,
     edge_orientation_histogram,
     edge_statistics,
+    gradient_energy,
     non_maximum_suppression,
     speedup_ratio,
     throughput_mpix_per_second,
@@ -124,6 +125,17 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
     assert stats["edge_density"] == 0.5
     assert stats["max_magnitude"] == pytest.approx(0.8)
     assert stats["mean_magnitude"] == pytest.approx(float(edges.mean()))
+
+
+def test_gradient_energy_reports_directional_fraction() -> None:
+    horizontal = np.array([[1.0, 2.0], [0.0, 0.0]], dtype=np.float32)
+    vertical = np.array([[0.0, 0.0], [1.0, 1.0]], dtype=np.float32)
+
+    report = gradient_energy(horizontal, vertical)
+
+    assert report["mean_gradient_energy"] == pytest.approx(1.75)
+    assert report["max_gradient_energy"] == pytest.approx(4.0)
+    assert report["horizontal_energy_fraction"] == pytest.approx(5 / 7)
 
 
 def test_edge_mask_thresholds_magnitude_image() -> None:

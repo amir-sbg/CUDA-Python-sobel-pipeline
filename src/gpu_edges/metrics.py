@@ -77,6 +77,20 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def gradient_energy(horizontal: np.ndarray, vertical: np.ndarray) -> dict[str, float]:
+    gx, gy = _validated_pair(horizontal, vertical)
+    if gx.ndim != 2:
+        raise ValueError("gradient inputs must be two-dimensional")
+    squared_norm = gx**2 + gy**2
+    return {
+        "mean_gradient_energy": float(np.mean(squared_norm)),
+        "max_gradient_energy": float(np.max(squared_norm)),
+        "horizontal_energy_fraction": float(
+            np.sum(gx**2) / max(float(np.sum(squared_norm)), 1e-12)
+        ),
+    }
+
+
 def edge_mask(edges: np.ndarray, threshold: float) -> np.ndarray:
     _validate_threshold(threshold)
     values = np.asarray(edges, dtype=np.float32)
