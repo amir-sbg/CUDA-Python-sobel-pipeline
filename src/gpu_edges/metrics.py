@@ -46,16 +46,64 @@ def binary_edge_metrics(
     union = true_positive + false_positive + false_negative
     precision = true_positive / predicted if predicted else 1.0
     recall = true_positive / actual if actual else 1.0
-    f1 = (
-        2.0 * precision * recall / (precision + recall)
-        if precision + recall
-        else 1.0
-    )
+    if precision + recall:
+        f1 = 2.0 * precision * recall / (precision + recall)
+    else:
+        f1 = 1.0 if predicted == 0 and actual == 0 else 0.0
     return {
         "precision": float(precision),
         "recall": float(recall),
         "f1": float(f1),
         "iou": float(true_positive / union if union else 1.0),
+    }
+
+
+def spatial_edge_metrics(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    threshold: float,
+    radius: int = 1,
+) -> dict[str, float | int]:
+    """Compare edge maps while allowing a small localization tolerance."""
+
+    _validate_threshold(threshold)
+    if radius < 0:
+        raise ValueError("radius must not be negative")
+    ref, got = _validated_pair(reference, candidate)
+    if ref.ndim != 2:
+        raise ValueError("edge maps must be two-dimensional")
+    reference_mask = ref >= threshold
+    candidate_mask = got >= threshold
+
+    def dilate(mask: np.ndarray) -> np.ndarray:
+        if radius == 0:
+            return mask
+        padded = np.pad(mask, radius, mode="constant", constant_values=False)
+        expanded = np.zeros_like(mask)
+        height, width = mask.shape
+        for row_offset in range(2 * radius + 1):
+            for col_offset in range(2 * radius + 1):
+                expanded |= padded[
+                    row_offset : row_offset + height,
+                    col_offset : col_offset + width,
+                ]
+        return expanded
+
+    matched_predictions = int(np.count_nonzero(candidate_mask & dilate(reference_mask)))
+    matched_references = int(np.count_nonzero(reference_mask & dilate(candidate_mask)))
+    predicted = int(np.count_nonzero(candidate_mask))
+    actual = int(np.count_nonzero(reference_mask))
+    precision = matched_predictions / predicted if predicted else 1.0
+    recall = matched_references / actual if actual else 1.0
+    if precision + recall:
+        f1 = 2.0 * precision * recall / (precision + recall)
+    else:
+        f1 = 1.0 if predicted == 0 and actual == 0 else 0.0
+    return {
+        "radius_pixels": radius,
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1": float(f1),
     }
 
 

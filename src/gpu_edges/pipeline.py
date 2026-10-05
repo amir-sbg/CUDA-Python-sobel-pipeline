@@ -24,6 +24,7 @@ from .metrics import (
     non_maximum_suppression,
     nms_reduction_ratio,
     speedup_ratio,
+    spatial_edge_metrics,
     throughput_mpix_per_second,
 )
 
@@ -109,6 +110,12 @@ def run(
             cpu_output,
             output,
             threshold,
+        )
+        report["spatial_edge_comparison"] = spatial_edge_metrics(
+            cpu_output,
+            output,
+            threshold,
+            radius=1,
         )
     report["edge_statistics"] = edge_statistics(output, threshold)
     report["edge_quality_flags"] = edge_quality_flags(report["edge_statistics"])

@@ -21,6 +21,7 @@ from gpu_edges.metrics import (
     non_maximum_suppression,
     nms_reduction_ratio,
     speedup_ratio,
+    spatial_edge_metrics,
     throughput_mpix_per_second,
 )
 from gpu_edges.pipeline import run
@@ -112,6 +113,26 @@ def test_binary_edge_metrics_report_overlap() -> None:
 def test_binary_edge_metrics_handles_empty_edge_maps() -> None:
     metrics = binary_edge_metrics(np.zeros((2, 2)), np.zeros((2, 2)), 0.5)
     assert metrics == {"precision": 1.0, "recall": 1.0, "f1": 1.0, "iou": 1.0}
+
+
+def test_binary_edge_metrics_report_zero_f1_for_disjoint_edges() -> None:
+    reference = np.array([[1.0, 0.0]], dtype=np.float32)
+    candidate = np.array([[0.0, 1.0]], dtype=np.float32)
+
+    assert binary_edge_metrics(reference, candidate, threshold=0.5)["f1"] == 0.0
+
+
+def test_spatial_edge_metrics_tolerate_one_pixel_shift() -> None:
+    reference = np.zeros((5, 5), dtype=np.float32)
+    candidate = np.zeros((5, 5), dtype=np.float32)
+    reference[2, 2] = 1.0
+    candidate[2, 3] = 1.0
+
+    strict = spatial_edge_metrics(reference, candidate, threshold=0.5, radius=0)
+    tolerant = spatial_edge_metrics(reference, candidate, threshold=0.5, radius=1)
+
+    assert strict["f1"] == 0.0
+    assert tolerant["f1"] == 1.0
 
 
 def test_edge_statistics_report_density_and_magnitude() -> None:
