@@ -125,6 +125,29 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def edge_magnitude_quantiles(
+    edges: np.ndarray,
+    threshold: float,
+) -> dict[str, float | int]:
+    """Summarize the strength distribution of pixels classified as edges."""
+
+    _validate_threshold(threshold)
+    values = np.asarray(edges, dtype=np.float64)
+    if values.ndim != 2 or values.size == 0:
+        raise ValueError("edges must be a non-empty two-dimensional array")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("edges must contain only finite values")
+    active = values[values >= threshold]
+    if active.size == 0:
+        return {"active_pixels": 0, "p50": 0.0, "p90": 0.0, "p99": 0.0}
+    return {
+        "active_pixels": int(active.size),
+        "p50": float(np.quantile(active, 0.50)),
+        "p90": float(np.quantile(active, 0.90)),
+        "p99": float(np.quantile(active, 0.99)),
+    }
+
+
 def edge_quality_flags(stats: dict[str, float]) -> list[str]:
     density = float(stats.get("edge_density", 0.0))
     flags = []

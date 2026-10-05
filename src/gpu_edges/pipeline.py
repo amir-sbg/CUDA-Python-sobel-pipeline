@@ -16,6 +16,7 @@ from .metrics import (
     binary_edge_metrics,
     comparison_metrics,
     edge_mask,
+    edge_magnitude_quantiles,
     edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
@@ -118,6 +119,7 @@ def run(
             radius=1,
         )
     report["edge_statistics"] = edge_statistics(output, threshold)
+    report["edge_magnitude_quantiles"] = edge_magnitude_quantiles(output, threshold)
     report["edge_quality_flags"] = edge_quality_flags(report["edge_statistics"])
     horizontal, vertical, reference_magnitude = sobel_components(image)
     report["gradient_energy"] = gradient_energy(horizontal, vertical)

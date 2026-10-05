@@ -13,6 +13,7 @@ from gpu_edges.metrics import (
     binary_edge_metrics,
     comparison_metrics,
     edge_mask,
+    edge_magnitude_quantiles,
     edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
@@ -149,6 +150,16 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
     assert stats["edge_density"] == 0.5
     assert stats["max_magnitude"] == pytest.approx(0.8)
     assert stats["mean_magnitude"] == pytest.approx(float(edges.mean()))
+
+
+def test_edge_magnitude_quantiles_ignore_background_pixels() -> None:
+    edges = np.array([[0.0, 0.2, 0.5, 0.8, 1.0]], dtype=np.float32)
+
+    summary = edge_magnitude_quantiles(edges, threshold=0.5)
+
+    assert summary["active_pixels"] == 3
+    assert summary["p50"] == pytest.approx(0.8)
+    assert summary["p90"] > summary["p50"]
 
 
 def test_gradient_energy_reports_directional_fraction() -> None:
