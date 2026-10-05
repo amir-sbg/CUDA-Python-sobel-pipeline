@@ -16,6 +16,7 @@ from .metrics import (
     binary_edge_metrics,
     comparison_metrics,
     edge_mask,
+    edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
     edge_statistics,
@@ -114,6 +115,12 @@ def run(
     horizontal, vertical, reference_magnitude = sobel_components(image)
     report["gradient_energy"] = gradient_energy(horizontal, vertical)
     report["edge_orientation_histogram"] = edge_orientation_histogram(
+        horizontal,
+        vertical,
+        reference_magnitude,
+        threshold,
+    )
+    report["edge_orientation_coherence"] = edge_orientation_coherence(
         horizontal,
         vertical,
         reference_magnitude,

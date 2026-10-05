@@ -155,6 +155,27 @@ def edge_orientation_histogram(
     ]
 
 
+def edge_orientation_coherence(
+    horizontal: np.ndarray,
+    vertical: np.ndarray,
+    magnitude: np.ndarray,
+    threshold: float,
+) -> float:
+    """Measure whether strong gradients share a dominant axial direction."""
+
+    gx, gy = _validated_pair(horizontal, vertical)
+    _, mag = _validated_pair(horizontal, magnitude)
+    _validate_threshold(threshold)
+    active = mag >= threshold
+    if not np.any(active):
+        return 0.0
+
+    angles = np.arctan2(gy[active], gx[active])
+    weights = mag[active]
+    resultant = np.sum(weights * np.exp(2j * angles))
+    return float(np.abs(resultant) / np.sum(weights))
+
+
 def non_maximum_suppression(
     horizontal: np.ndarray,
     vertical: np.ndarray,

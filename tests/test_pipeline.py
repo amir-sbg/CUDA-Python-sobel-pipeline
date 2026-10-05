@@ -13,6 +13,7 @@ from gpu_edges.metrics import (
     binary_edge_metrics,
     comparison_metrics,
     edge_mask,
+    edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
     edge_statistics,
@@ -138,6 +139,23 @@ def test_gradient_energy_reports_directional_fraction() -> None:
     assert report["mean_gradient_energy"] == pytest.approx(1.75)
     assert report["max_gradient_energy"] == pytest.approx(4.0)
     assert report["horizontal_energy_fraction"] == pytest.approx(5 / 7)
+
+
+def test_orientation_coherence_distinguishes_aligned_gradients() -> None:
+    horizontal = np.ones((3, 3), dtype=np.float32)
+    vertical = np.zeros((3, 3), dtype=np.float32)
+    magnitude = np.ones((3, 3), dtype=np.float32)
+
+    assert edge_orientation_coherence(horizontal, vertical, magnitude, 0.5) == pytest.approx(1.0)
+
+    mixed_horizontal = np.array([[1.0, 0.0], [1.0, 0.0]], dtype=np.float32)
+    mixed_vertical = np.array([[0.0, 1.0], [0.0, 1.0]], dtype=np.float32)
+    assert edge_orientation_coherence(
+        mixed_horizontal,
+        mixed_vertical,
+        np.ones((2, 2), dtype=np.float32),
+        0.5,
+    ) == pytest.approx(0.0, abs=1e-7)
 
 
 def test_edge_quality_flags_warn_on_bad_thresholds() -> None:
