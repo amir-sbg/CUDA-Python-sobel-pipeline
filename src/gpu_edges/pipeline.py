@@ -20,6 +20,7 @@ from .metrics import (
     edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
+    edge_separation_metrics,
     edge_statistics,
     gradient_energy,
     hysteresis_edge_mask,
@@ -124,6 +125,7 @@ def run(
             radius=1,
         )
     report["edge_statistics"] = edge_statistics(output, threshold)
+    report["edge_separation"] = edge_separation_metrics(output, threshold)
     report["edge_magnitude_quantiles"] = edge_magnitude_quantiles(output, threshold)
     report["edge_quality_flags"] = edge_quality_flags(report["edge_statistics"])
     horizontal, vertical, reference_magnitude = sobel_components(

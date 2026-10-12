@@ -17,6 +17,7 @@ from gpu_edges.metrics import (
     edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
+    edge_separation_metrics,
     edge_statistics,
     gradient_energy,
     hysteresis_edge_mask,
@@ -172,6 +173,17 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
     assert stats["edge_density"] == 0.5
     assert stats["max_magnitude"] == pytest.approx(0.8)
     assert stats["mean_magnitude"] == pytest.approx(float(edges.mean()))
+
+
+def test_edge_separation_reports_gradient_contrast() -> None:
+    edges = np.array([[0.05, 0.1, 0.8, 1.0]], dtype=np.float32)
+
+    report = edge_separation_metrics(edges, threshold=0.5)
+
+    assert report["edge_pixels"] == 2
+    assert report["background_pixels"] == 2
+    assert report["edge_mean"] > report["background_mean"]
+    assert report["standardized_gap"] > 0
 
 
 def test_edge_magnitude_quantiles_ignore_background_pixels() -> None:
@@ -332,6 +344,7 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert report["cpu_throughput_mpix_per_s"] > 0
     assert report["edge_threshold"] == config.edge_threshold
     assert "edge_density" in report["edge_statistics"]
+    assert report["edge_separation"]["edge_pixels"] >= 0
     assert isinstance(report["edge_quality_flags"], list)
     assert "mean_gradient_energy" in report["gradient_energy"]
     assert len(report["edge_orientation_histogram"]) == 8

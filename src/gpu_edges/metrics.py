@@ -145,6 +145,35 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def edge_separation_metrics(
+    edges: np.ndarray,
+    threshold: float,
+) -> dict[str, float | int]:
+    _validate_threshold(threshold)
+    values = np.asarray(edges, dtype=np.float64)
+    if values.ndim != 2 or values.size == 0:
+        raise ValueError("edges must be a non-empty two-dimensional array")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("edges must contain only finite values")
+    active = values[values >= threshold]
+    background = values[values < threshold]
+    active_mean = float(active.mean()) if active.size else 0.0
+    background_mean = float(background.mean()) if background.size else 0.0
+    if active.size and background.size:
+        pooled_variance = (float(active.var()) + float(background.var())) / 2.0
+        standardized_gap = (active_mean - background_mean) / max(pooled_variance**0.5, 1e-12)
+    else:
+        standardized_gap = 0.0
+    return {
+        "edge_pixels": int(active.size),
+        "background_pixels": int(background.size),
+        "edge_mean": active_mean,
+        "background_mean": background_mean,
+        "mean_contrast_ratio": active_mean / max(background_mean, 1e-12),
+        "standardized_gap": float(standardized_gap),
+    }
+
+
 def edge_magnitude_quantiles(
     edges: np.ndarray,
     threshold: float,
