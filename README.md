@@ -2,7 +2,7 @@
 
 A small, reproducible edge-detection pipeline with matching NumPy and CUDA implementations. It is useful for checking a custom GPU kernel against a reference implementation while keeping the image-processing and benchmarking steps easy to inspect.
 
-The pipeline can generate a deterministic test image or read a grayscale image, optionally smooth it with a Gaussian filter, run the Sobel operator, and save the edge map. On CUDA systems, CuPy launches one thread per pixel; the CPU path remains available for development and comparison.
+The pipeline can generate a deterministic test image or read a grayscale image, optionally smooth it with a Gaussian filter, run a Sobel or Scharr operator, and save the edge map. On CUDA systems, CuPy launches one thread per pixel; the CPU path remains available for development and comparison.
 
 ## What it reports
 
@@ -45,6 +45,7 @@ python -m gpu_edges.pipeline \
   --input path/to/image.png \
   --block-x 16 --block-y 16 --iterations 50 \
   --blur-sigma 0.8 --edge-quantile 0.85 \
+  --gradient-operator scharr \
   --output outputs/edges.png \
   --mask-output outputs/edge_mask.png \
   --nms-output outputs/edges_nms.png \

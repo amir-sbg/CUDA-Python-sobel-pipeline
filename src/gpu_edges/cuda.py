@@ -74,14 +74,23 @@ def launch_shape(
     }
 
 
-def _launch(kernel, image, output, block_x: int, block_y: int) -> None:
+def _operator_weights(operator: str) -> tuple[float, float]:
+    if operator == "sobel":
+        return 1.0, 2.0
+    if operator == "scharr":
+        return 3.0, 10.0
+    raise ValueError("operator must be 'sobel' or 'scharr'")
+
+
+def _launch(kernel, image, output, block_x: int, block_y: int, operator: str) -> None:
     height, width = image.shape
     shape = launch_shape(height, width, block_x, block_y)
     grid = (shape["blocks_x"], shape["blocks_y"])
+    corner_weight, axial_weight = _operator_weights(operator)
     kernel(
         grid,
         (block_x, block_y),
-        (image, output, np.int32(height), np.int32(width)),
+        (image, output, np.int32(height), np.int32(width), np.float32(corner_weight), np.float32(axial_weight)),
     )
 
 
@@ -89,13 +98,14 @@ def sobel_edges_gpu(
     image: np.ndarray,
     block_x: int = 16,
     block_y: int = 16,
+    operator: str = "sobel",
 ) -> np.ndarray:
     _validate_launch(image, block_x, block_y)
     if not cuda_available():
         raise RuntimeError("a CUDA-enabled CuPy runtime is required")
     values = cp.asarray(image, dtype=cp.float32)
     output = cp.empty_like(values)
-    _launch(_sobel_kernel(), values, output, block_x, block_y)
+    _launch(_sobel_kernel(), values, output, block_x, block_y, operator)
     cp.cuda.Stream.null.synchronize()
     return cp.asnumpy(output)
 
@@ -105,6 +115,7 @@ def benchmark_gpu(
     block_x: int,
     block_y: int,
     iterations: int,
+    operator: str = "sobel",
 ) -> tuple[np.ndarray, float]:
     _validate_launch(image, block_x, block_y, iterations)
     if not cuda_available():
@@ -112,14 +123,14 @@ def benchmark_gpu(
     values = cp.asarray(image, dtype=cp.float32)
     output = cp.empty_like(values)
     kernel = _sobel_kernel()
-    _launch(kernel, values, output, block_x, block_y)
+    _launch(kernel, values, output, block_x, block_y, operator)
     cp.cuda.Stream.null.synchronize()
 
     start = cp.cuda.Event()
     stop = cp.cuda.Event()
     start.record()
     for _ in range(iterations):
-        _launch(kernel, values, output, block_x, block_y)
+        _launch(kernel, values, output, block_x, block_y, operator)
     stop.record()
     stop.synchronize()
     elapsed_ms = cp.cuda.get_elapsed_time(start, stop) / iterations

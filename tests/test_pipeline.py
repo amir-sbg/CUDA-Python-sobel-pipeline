@@ -54,6 +54,17 @@ def test_cpu_sobel_components_match_magnitude_output() -> None:
     np.testing.assert_allclose(magnitude, sobel_edges(image))
 
 
+def test_scharr_operator_detects_step_edge() -> None:
+    image = np.zeros((7, 7), dtype=np.float32)
+    image[:, 4:] = 1.0
+
+    horizontal, vertical, magnitude = sobel_components(image, operator="scharr")
+
+    assert magnitude[3, 3] > sobel_edges(image)[3, 3]
+    assert horizontal[3, 3] > 0
+    assert vertical[3, 3] == pytest.approx(0.0)
+
+
 def test_gaussian_blur_preserves_shape_and_reduces_impulse() -> None:
     image = np.zeros((9, 9), dtype=np.float32)
     image[4, 4] = 1.0
@@ -338,6 +349,19 @@ def test_cpu_pipeline_reports_blur_setting(tmp_path) -> None:
 
     assert report["blur_sigma"] == 0.8
     assert config.report_path.exists()
+
+
+def test_cpu_pipeline_reports_gradient_operator(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=1,
+        gradient_operator="scharr",
+        output_path=tmp_path / "edges.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    assert run(config, cpu_only=True)["gradient_operator"] == "scharr"
 
 
 def test_cpu_pipeline_can_write_binary_edge_mask(tmp_path) -> None:

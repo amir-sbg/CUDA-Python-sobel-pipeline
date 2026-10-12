@@ -2,7 +2,9 @@ extern "C" __global__ void sobel_edges(
     const float* image,
     float* output,
     int height,
-    int width) {
+    int width,
+    float corner_weight,
+    float axial_weight) {
     const int x = blockIdx.x * blockDim.x + threadIdx.x;
     const int y = blockIdx.y * blockDim.y + threadIdx.y;
     if (x >= width || y >= height) {
@@ -15,12 +17,18 @@ extern "C" __global__ void sobel_edges(
     }
 
     const float horizontal =
-        -image[(y - 1) * width + (x - 1)] + image[(y - 1) * width + (x + 1)]
-        - 2.0F * image[y * width + (x - 1)] + 2.0F * image[y * width + (x + 1)]
-        - image[(y + 1) * width + (x - 1)] + image[(y + 1) * width + (x + 1)];
+        -corner_weight * image[(y - 1) * width + (x - 1)]
+        + corner_weight * image[(y - 1) * width + (x + 1)]
+        - axial_weight * image[y * width + (x - 1)]
+        + axial_weight * image[y * width + (x + 1)]
+        - corner_weight * image[(y + 1) * width + (x - 1)]
+        + corner_weight * image[(y + 1) * width + (x + 1)];
     const float vertical =
-        -image[(y - 1) * width + (x - 1)] - 2.0F * image[(y - 1) * width + x]
-        - image[(y - 1) * width + (x + 1)] + image[(y + 1) * width + (x - 1)]
-        + 2.0F * image[(y + 1) * width + x] + image[(y + 1) * width + (x + 1)];
+        -corner_weight * image[(y - 1) * width + (x - 1)]
+        - axial_weight * image[(y - 1) * width + x]
+        - corner_weight * image[(y - 1) * width + (x + 1)]
+        + corner_weight * image[(y + 1) * width + (x - 1)]
+        + axial_weight * image[(y + 1) * width + x]
+        + corner_weight * image[(y + 1) * width + (x + 1)];
     output[index] = sqrtf(horizontal * horizontal + vertical * vertical);
 }

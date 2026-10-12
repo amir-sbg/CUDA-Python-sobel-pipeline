@@ -30,11 +30,11 @@ from .metrics import (
 )
 
 
-def _benchmark_cpu(image, iterations: int) -> tuple[object, float]:
-    output = sobel_edges(image)
+def _benchmark_cpu(image, iterations: int, operator: str) -> tuple[object, float]:
+    output = sobel_edges(image, operator=operator)
     start = perf_counter()
     for _ in range(iterations):
-        output = sobel_edges(image)
+        output = sobel_edges(image, operator=operator)
     elapsed_ms = (perf_counter() - start) * 1000.0 / iterations
     return output, elapsed_ms
 
@@ -55,7 +55,7 @@ def run(
         config.seed,
     )
     image = gaussian_blur(image, config.blur_sigma)
-    cpu_output, cpu_ms = _benchmark_cpu(image, config.iterations)
+    cpu_output, cpu_ms = _benchmark_cpu(image, config.iterations, config.gradient_operator)
     report = {
         "backend": "cpu",
         "input_source": str(input_path) if input_path else "generated",
@@ -70,6 +70,7 @@ def run(
         ),
         "iterations": config.iterations,
         "blur_sigma": config.blur_sigma,
+        "gradient_operator": config.gradient_operator,
         "cpu_average_ms": cpu_ms,
         "cpu_throughput_mpix_per_s": throughput_mpix_per_second(
             image.shape[0],
@@ -88,6 +89,7 @@ def run(
             config.block_x,
             config.block_y,
             config.iterations,
+            operator=config.gradient_operator,
         )
         report["backend"] = "cuda"
         report["gpu_kernel_average_ms"] = gpu_ms
@@ -121,7 +123,9 @@ def run(
     report["edge_statistics"] = edge_statistics(output, threshold)
     report["edge_magnitude_quantiles"] = edge_magnitude_quantiles(output, threshold)
     report["edge_quality_flags"] = edge_quality_flags(report["edge_statistics"])
-    horizontal, vertical, reference_magnitude = sobel_components(image)
+    horizontal, vertical, reference_magnitude = sobel_components(
+        image, operator=config.gradient_operator
+    )
     report["gradient_energy"] = gradient_energy(horizontal, vertical)
     report["edge_orientation_histogram"] = edge_orientation_histogram(
         horizontal,
@@ -165,6 +169,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--block-y", type=int, default=16)
     parser.add_argument("--iterations", type=int, default=50)
     parser.add_argument("--blur-sigma", type=float, default=0.0)
+    parser.add_argument("--gradient-operator", choices=["sobel", "scharr"], default="sobel")
     parser.add_argument("--edge-threshold", type=float, default=0.20)
     parser.add_argument("--edge-quantile", type=float)
     parser.add_argument("--output", type=Path, default=Path("outputs/sobel_edges.png"))
