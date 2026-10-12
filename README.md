@@ -52,7 +52,7 @@ python -m gpu_edges.pipeline \
   --report reports/run.json
 ```
 
-Use `--edge-threshold` for a fixed cutoff. The adaptive quantile option is helpful when images have different contrast levels. GPU timing covers kernel execution only; host-device transfers are outside the measured region.
+Use `--edge-threshold` for a fixed cutoff. The adaptive quantile option is helpful when images have different contrast levels. For a connected binary map, add `--hysteresis-ratio 0.5` to retain weak edges only when they touch a strong response. GPU timing covers kernel execution only; host-device transfers are outside the measured region.
 
 ## Layout
 

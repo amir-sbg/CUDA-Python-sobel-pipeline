@@ -19,6 +19,7 @@ from gpu_edges.metrics import (
     edge_quality_flags,
     edge_statistics,
     gradient_energy,
+    hysteresis_edge_mask,
     non_maximum_suppression,
     nms_reduction_ratio,
     speedup_ratio,
@@ -219,6 +220,17 @@ def test_edge_mask_thresholds_magnitude_image() -> None:
     np.testing.assert_array_equal(mask, np.array([[0.0, 0.0], [1.0, 1.0]], dtype=np.float32))
 
 
+def test_hysteresis_keeps_weak_edges_connected_to_strong_edges() -> None:
+    edges = np.zeros((5, 6), dtype=np.float32)
+    edges[2, 1:4] = [1.0, 0.6, 0.55]
+    edges[4, 4] = 0.7
+
+    mask = hysteresis_edge_mask(edges, high_threshold=0.9, low_ratio=0.5)
+
+    np.testing.assert_array_equal(mask[2, 1:4], np.ones(3))
+    assert mask[4, 4] == 0.0
+
+
 def test_edge_statistics_rejects_non_finite_values() -> None:
     with pytest.raises(ValueError, match="finite"):
         edge_statistics(np.array([[0.0, np.inf]], dtype=np.float32))
@@ -378,6 +390,23 @@ def test_cpu_pipeline_can_write_binary_edge_mask(tmp_path) -> None:
 
     assert report["mask_output"] == str(config.mask_output_path)
     assert config.mask_output_path.exists()
+
+
+def test_pipeline_can_write_hysteresis_mask(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=1,
+        hysteresis_ratio=0.5,
+        output_path=tmp_path / "edges.png",
+        mask_output_path=tmp_path / "mask.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    report = run(config, cpu_only=True)
+
+    assert report["hysteresis_ratio"] == 0.5
+    assert report["mask_edge_pixels"] >= 0
 
 
 def test_cpu_pipeline_can_write_nms_edge_map(tmp_path) -> None:

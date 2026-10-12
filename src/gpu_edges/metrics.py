@@ -184,6 +184,39 @@ def edge_mask(edges: np.ndarray, threshold: float) -> np.ndarray:
     return (values >= threshold).astype(np.float32)
 
 
+def hysteresis_edge_mask(
+    edges: np.ndarray,
+    high_threshold: float,
+    low_ratio: float = 0.5,
+) -> np.ndarray:
+    _validate_threshold(high_threshold)
+    if not np.isfinite(low_ratio) or not 0.0 < low_ratio < 1.0:
+        raise ValueError("low_ratio must be between 0 and 1")
+    values = np.asarray(edges, dtype=np.float32)
+    if values.ndim != 2 or values.size == 0:
+        raise ValueError("edges must be a non-empty two-dimensional array")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("edges must contain only finite values")
+
+    weak = values >= high_threshold * low_ratio
+    connected = values >= high_threshold
+    while True:
+        padded = np.pad(connected, 1, mode="constant", constant_values=False)
+        neighbors = np.zeros_like(connected)
+        height, width = connected.shape
+        for row_offset in range(3):
+            for col_offset in range(3):
+                neighbors |= padded[
+                    row_offset : row_offset + height,
+                    col_offset : col_offset + width,
+                ]
+        expanded = weak & neighbors
+        if np.array_equal(expanded, connected):
+            break
+        connected = expanded
+    return connected.astype(np.float32)
+
+
 def edge_orientation_histogram(
     horizontal: np.ndarray,
     vertical: np.ndarray,

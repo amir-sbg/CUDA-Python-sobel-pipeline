@@ -17,6 +17,7 @@ class PipelineConfig:
     gradient_operator: str = "sobel"
     edge_threshold: float = 0.20
     edge_quantile: float | None = None
+    hysteresis_ratio: float | None = None
     output_path: Path = Path("outputs/sobel_edges.png")
     mask_output_path: Path | None = None
     nms_output_path: Path | None = None
@@ -42,3 +43,8 @@ class PipelineConfig:
             or not 0.0 < self.edge_quantile < 1.0
         ):
             raise ValueError("edge_quantile must be between 0 and 1")
+        if self.hysteresis_ratio is not None and (
+            not isfinite(self.hysteresis_ratio)
+            or not 0.0 < self.hysteresis_ratio < 1.0
+        ):
+            raise ValueError("hysteresis_ratio must be between 0 and 1")
