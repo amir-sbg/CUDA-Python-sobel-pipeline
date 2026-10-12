@@ -22,6 +22,7 @@ from gpu_edges.metrics import (
     hysteresis_edge_mask,
     non_maximum_suppression,
     nms_reduction_ratio,
+    scale_space_consistency,
     speedup_ratio,
     spatial_edge_metrics,
     throughput_mpix_per_second,
@@ -109,6 +110,15 @@ def test_comparison_metrics_reject_bad_arrays() -> None:
         comparison_metrics(np.ones((3, 3)), np.ones((3, 2)))
     with pytest.raises(ValueError, match="finite"):
         comparison_metrics(np.ones((3, 3)), np.full((3, 3), np.nan))
+
+
+def test_scale_space_consistency_is_one_for_rescaled_maps() -> None:
+    reference = np.array([[0.0, 1.0], [2.0, 3.0]], dtype=np.float32)
+    report = scale_space_consistency(reference, reference * 4)
+
+    assert report["cosine_similarity"] == pytest.approx(1.0)
+    assert report["pearson_correlation"] == pytest.approx(1.0)
+    assert report["normalized_mae"] == pytest.approx(0.0)
 
 
 def test_binary_edge_metrics_report_overlap() -> None:
@@ -361,6 +371,22 @@ def test_cpu_pipeline_reports_blur_setting(tmp_path) -> None:
 
     assert report["blur_sigma"] == 0.8
     assert config.report_path.exists()
+
+
+def test_pipeline_reports_scale_space_stability(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=1,
+        scale_check_sigma=1.2,
+        output_path=tmp_path / "edges.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    report = run(config, cpu_only=True)
+
+    assert report["scale_space"]["additional_sigma"] == 1.2
+    assert -1.0 <= report["scale_space"]["pearson_correlation"] <= 1.0
 
 
 def test_cpu_pipeline_reports_gradient_operator(tmp_path) -> None:

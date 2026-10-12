@@ -10,6 +10,7 @@ The pipeline can generate a deterministic test image or read a grayscale image, 
 - Maximum error and RMSE between CPU and CUDA magnitudes
 - Binary edge precision, recall, F1, and IoU
 - Edge density, gradient energy, orientation histogram, and optional non-maximum suppression reduction
+- Scale-space stability after an optional second smoothing pass
 
 ## Setup
 
@@ -46,6 +47,7 @@ python -m gpu_edges.pipeline \
   --block-x 16 --block-y 16 --iterations 50 \
   --blur-sigma 0.8 --edge-quantile 0.85 \
   --gradient-operator scharr \
+  --scale-check-sigma 1.2 \
   --output outputs/edges.png \
   --mask-output outputs/edge_mask.png \
   --nms-output outputs/edges_nms.png \

@@ -14,6 +14,7 @@ class PipelineConfig:
     block_y: int = 16
     iterations: int = 50
     blur_sigma: float = 0.0
+    scale_check_sigma: float | None = None
     gradient_operator: str = "sobel"
     edge_threshold: float = 0.20
     edge_quantile: float | None = None
@@ -34,6 +35,10 @@ class PipelineConfig:
             raise ValueError("iterations must be at least 1")
         if not isfinite(self.blur_sigma) or self.blur_sigma < 0:
             raise ValueError("blur_sigma must not be negative")
+        if self.scale_check_sigma is not None and (
+            not isfinite(self.scale_check_sigma) or self.scale_check_sigma <= 0
+        ):
+            raise ValueError("scale_check_sigma must be positive")
         if self.gradient_operator not in {"sobel", "scharr"}:
             raise ValueError("gradient_operator must be 'sobel' or 'scharr'")
         if not isfinite(self.edge_threshold) or self.edge_threshold < 0:

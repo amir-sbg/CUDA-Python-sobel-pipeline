@@ -25,6 +25,7 @@ from .metrics import (
     hysteresis_edge_mask,
     non_maximum_suppression,
     nms_reduction_ratio,
+    scale_space_consistency,
     speedup_ratio,
     spatial_edge_metrics,
     throughput_mpix_per_second,
@@ -141,6 +142,13 @@ def run(
         reference_magnitude,
         threshold,
     )
+    if config.scale_check_sigma is not None:
+        scale_image = gaussian_blur(image, config.scale_check_sigma)
+        scale_edges = sobel_edges(scale_image, operator=config.gradient_operator)
+        report["scale_space"] = {
+            "additional_sigma": config.scale_check_sigma,
+            **scale_space_consistency(reference_magnitude, scale_edges),
+        }
     if config.nms_output_path is not None:
         thinned = non_maximum_suppression(horizontal, vertical, reference_magnitude)
         save_grayscale(_normalize(thinned), config.nms_output_path)
@@ -177,6 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--block-y", type=int, default=16)
     parser.add_argument("--iterations", type=int, default=50)
     parser.add_argument("--blur-sigma", type=float, default=0.0)
+    parser.add_argument("--scale-check-sigma", type=float)
     parser.add_argument("--gradient-operator", choices=["sobel", "scharr"], default="sobel")
     parser.add_argument("--edge-threshold", type=float, default=0.20)
     parser.add_argument("--edge-quantile", type=float)

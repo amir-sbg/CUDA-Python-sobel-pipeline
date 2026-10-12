@@ -29,6 +29,26 @@ def comparison_metrics(reference: np.ndarray, candidate: np.ndarray) -> dict[str
     }
 
 
+def scale_space_consistency(
+    reference: np.ndarray,
+    smoothed: np.ndarray,
+) -> dict[str, float]:
+    ref, coarse = _validated_pair(reference, smoothed)
+    ref_norm = ref / max(float(np.max(np.abs(ref))), 1e-12)
+    coarse_norm = coarse / max(float(np.max(np.abs(coarse))), 1e-12)
+    denominator = np.linalg.norm(ref_norm) * np.linalg.norm(coarse_norm)
+    cosine = float(np.sum(ref_norm * coarse_norm) / denominator) if denominator else 1.0
+    if np.std(ref_norm) > 0 and np.std(coarse_norm) > 0:
+        correlation = float(np.corrcoef(ref_norm.ravel(), coarse_norm.ravel())[0, 1])
+    else:
+        correlation = 1.0 if np.array_equal(ref_norm, coarse_norm) else 0.0
+    return {
+        "cosine_similarity": cosine,
+        "pearson_correlation": correlation,
+        "normalized_mae": float(np.mean(np.abs(ref_norm - coarse_norm))),
+    }
+
+
 def binary_edge_metrics(
     reference: np.ndarray,
     candidate: np.ndarray,
