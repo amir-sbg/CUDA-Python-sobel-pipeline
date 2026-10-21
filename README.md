@@ -48,6 +48,7 @@ python -m gpu_edges.pipeline \
   --blur-sigma 0.8 --edge-quantile 0.85 \
   --gradient-operator scharr \
   --scale-check-sigma 1.2 \
+  --noise-check-std 0.02 \
   --output outputs/edges.png \
   --mask-output outputs/edge_mask.png \
   --nms-output outputs/edges_nms.png \

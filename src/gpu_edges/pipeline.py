@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from time import perf_counter
 
+import numpy as np
+
 from .config import PipelineConfig
 from .cpu import sobel_components, sobel_edges
 from .cuda import benchmark_gpu, cuda_available, launch_shape
@@ -168,6 +170,23 @@ def run(
             "additional_sigma": config.scale_check_sigma,
             **scale_space_consistency(reference_magnitude, scale_edges),
         }
+    if config.noise_check_std is not None:
+        generator = np.random.default_rng(config.seed + 1)
+        noisy_image = np.clip(
+            image + generator.normal(0.0, config.noise_check_std, image.shape),
+            0.0,
+            1.0,
+        ).astype(np.float32)
+        noisy_edges = sobel_edges(noisy_image, operator=config.gradient_operator)
+        report["noise_robustness"] = {
+            "noise_std": config.noise_check_std,
+            **scale_space_consistency(reference_magnitude, noisy_edges),
+            "binary_f1": binary_edge_metrics(
+                reference_magnitude,
+                noisy_edges,
+                threshold,
+            )["f1"],
+        }
     if config.nms_output_path is not None:
         thinned = non_maximum_suppression(horizontal, vertical, reference_magnitude)
         save_grayscale(_normalize(thinned), config.nms_output_path)
@@ -205,6 +224,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--iterations", type=int, default=50)
     parser.add_argument("--blur-sigma", type=float, default=0.0)
     parser.add_argument("--scale-check-sigma", type=float)
+    parser.add_argument("--noise-check-std", type=float)
     parser.add_argument("--gradient-operator", choices=["sobel", "scharr"], default="sobel")
     parser.add_argument("--edge-threshold", type=float, default=0.20)
     parser.add_argument("--edge-quantile", type=float)

@@ -470,6 +470,22 @@ def test_pipeline_reports_scale_space_stability(tmp_path) -> None:
     assert -1.0 <= report["scale_space"]["pearson_correlation"] <= 1.0
 
 
+def test_pipeline_reports_noise_robustness(tmp_path) -> None:
+    config = PipelineConfig(
+        height=32,
+        width=32,
+        iterations=1,
+        noise_check_std=0.02,
+        output_path=tmp_path / "edges.png",
+        report_path=tmp_path / "run.json",
+    )
+
+    report = run(config, cpu_only=True)
+
+    assert report["noise_robustness"]["noise_std"] == pytest.approx(0.02)
+    assert 0.0 <= report["noise_robustness"]["binary_f1"] <= 1.0
+
+
 def test_cpu_pipeline_reports_gradient_operator(tmp_path) -> None:
     config = PipelineConfig(
         height=32,
@@ -547,6 +563,11 @@ def test_config_rejects_negative_edge_threshold() -> None:
 def test_config_rejects_negative_blur_sigma() -> None:
     with pytest.raises(ValueError, match="blur_sigma"):
         PipelineConfig(blur_sigma=-0.1)
+
+
+def test_config_rejects_bad_noise_check_std() -> None:
+    with pytest.raises(ValueError, match="noise_check_std"):
+        PipelineConfig(noise_check_std=0.0)
 
 
 def test_config_rejects_bad_edge_quantile() -> None:
