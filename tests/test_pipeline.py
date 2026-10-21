@@ -23,6 +23,7 @@ from gpu_edges.metrics import (
     gradient_energy,
     hysteresis_edge_mask,
     non_maximum_suppression,
+    orientation_distribution_metrics,
     nms_reduction_ratio,
     scale_space_consistency,
     speedup_ratio,
@@ -235,6 +236,28 @@ def test_orientation_coherence_distinguishes_aligned_gradients() -> None:
         np.ones((2, 2), dtype=np.float32),
         0.5,
     ) == pytest.approx(0.0, abs=1e-7)
+
+
+def test_orientation_distribution_reports_directional_entropy() -> None:
+    magnitude = np.ones((2, 2), dtype=np.float32)
+    aligned = orientation_distribution_metrics(
+        np.ones((2, 2), dtype=np.float32),
+        np.zeros((2, 2), dtype=np.float32),
+        magnitude,
+        threshold=0.5,
+        bins=4,
+    )
+    mixed = orientation_distribution_metrics(
+        np.array([[1.0, 0.0], [-1.0, 0.0]], dtype=np.float32),
+        np.array([[0.0, 1.0], [0.0, -1.0]], dtype=np.float32),
+        magnitude,
+        threshold=0.5,
+        bins=4,
+    )
+
+    assert aligned["normalized_entropy"] == pytest.approx(0.0)
+    assert aligned["dominant_orientation_fraction"] == pytest.approx(1.0)
+    assert mixed["normalized_entropy"] > aligned["normalized_entropy"]
 
 
 def test_edge_quality_flags_warn_on_bad_thresholds() -> None:

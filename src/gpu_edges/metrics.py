@@ -407,6 +407,30 @@ def edge_orientation_coherence(
     return float(np.abs(resultant) / np.sum(weights))
 
 
+def orientation_distribution_metrics(
+    horizontal: np.ndarray,
+    vertical: np.ndarray,
+    magnitude: np.ndarray,
+    threshold: float,
+    bins: int = 8,
+) -> dict[str, float]:
+    rows = edge_orientation_histogram(
+        horizontal,
+        vertical,
+        magnitude,
+        threshold,
+        bins=bins,
+    )
+    fractions = np.asarray([row["fraction"] for row in rows], dtype=np.float64)
+    active = fractions > 0
+    entropy = -float(np.sum(fractions[active] * np.log(fractions[active])))
+    normalized_entropy = entropy / np.log(bins) if bins > 1 else 0.0
+    return {
+        "normalized_entropy": float(normalized_entropy),
+        "dominant_orientation_fraction": float(fractions.max(initial=0.0)),
+    }
+
+
 def non_maximum_suppression(
     horizontal: np.ndarray,
     vertical: np.ndarray,

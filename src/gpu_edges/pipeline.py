@@ -26,6 +26,7 @@ from .metrics import (
     gradient_energy,
     hysteresis_edge_mask,
     non_maximum_suppression,
+    orientation_distribution_metrics,
     nms_reduction_ratio,
     scale_space_consistency,
     speedup_ratio,
@@ -143,6 +144,12 @@ def run(
         threshold,
     )
     report["edge_orientation_coherence"] = edge_orientation_coherence(
+        horizontal,
+        vertical,
+        reference_magnitude,
+        threshold,
+    )
+    report["orientation_distribution"] = orientation_distribution_metrics(
         horizontal,
         vertical,
         reference_magnitude,
