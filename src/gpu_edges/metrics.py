@@ -145,6 +145,37 @@ def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, flo
     }
 
 
+def threshold_sensitivity(
+    edges: np.ndarray,
+    threshold: float,
+    relative_delta: float = 0.10,
+) -> dict[str, float]:
+    """Measure how much the binary edge map changes near its chosen threshold."""
+
+    _validate_threshold(threshold)
+    if not np.isfinite(relative_delta) or not 0.0 < relative_delta < 1.0:
+        raise ValueError("relative_delta must be between 0 and 1")
+    values = np.asarray(edges, dtype=np.float64)
+    if values.ndim != 2 or values.size == 0:
+        raise ValueError("edges must be a non-empty two-dimensional array")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("edges must contain only finite values")
+
+    low = values >= threshold * (1.0 - relative_delta)
+    center = values >= threshold
+    high = values >= threshold * (1.0 + relative_delta)
+    union = np.count_nonzero(low | high)
+    intersection = np.count_nonzero(low & high)
+    return {
+        "relative_delta": float(relative_delta),
+        "low_density": float(low.mean()),
+        "center_density": float(center.mean()),
+        "high_density": float(high.mean()),
+        "density_span": float(low.mean() - high.mean()),
+        "low_high_iou": float(intersection / union if union else 1.0),
+    }
+
+
 def edge_separation_metrics(
     edges: np.ndarray,
     threshold: float,

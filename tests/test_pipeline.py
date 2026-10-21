@@ -27,6 +27,7 @@ from gpu_edges.metrics import (
     speedup_ratio,
     spatial_edge_metrics,
     throughput_mpix_per_second,
+    threshold_sensitivity,
 )
 from gpu_edges.pipeline import run
 
@@ -173,6 +174,17 @@ def test_edge_statistics_report_density_and_magnitude() -> None:
     assert stats["edge_density"] == 0.5
     assert stats["max_magnitude"] == pytest.approx(0.8)
     assert stats["mean_magnitude"] == pytest.approx(float(edges.mean()))
+
+
+def test_threshold_sensitivity_tracks_density_changes() -> None:
+    edges = np.array([[0.46, 0.50, 0.56, 0.90]], dtype=np.float32)
+
+    report = threshold_sensitivity(edges, threshold=0.5, relative_delta=0.1)
+
+    assert report["low_density"] == pytest.approx(1.0)
+    assert report["center_density"] == pytest.approx(0.75)
+    assert report["high_density"] == pytest.approx(0.5)
+    assert report["density_span"] == pytest.approx(0.5)
 
 
 def test_edge_separation_reports_gradient_contrast() -> None:
@@ -344,6 +356,7 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert report["cpu_throughput_mpix_per_s"] > 0
     assert report["edge_threshold"] == config.edge_threshold
     assert "edge_density" in report["edge_statistics"]
+    assert report["threshold_sensitivity"]["low_density"] >= report["threshold_sensitivity"]["high_density"]
     assert report["edge_separation"]["edge_pixels"] >= 0
     assert isinstance(report["edge_quality_flags"], list)
     assert "mean_gradient_energy" in report["gradient_energy"]

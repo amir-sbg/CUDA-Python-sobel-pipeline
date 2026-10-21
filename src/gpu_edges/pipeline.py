@@ -30,6 +30,7 @@ from .metrics import (
     speedup_ratio,
     spatial_edge_metrics,
     throughput_mpix_per_second,
+    threshold_sensitivity,
 )
 
 
@@ -125,6 +126,7 @@ def run(
             radius=1,
         )
     report["edge_statistics"] = edge_statistics(output, threshold)
+    report["threshold_sensitivity"] = threshold_sensitivity(output, threshold)
     report["edge_separation"] = edge_separation_metrics(output, threshold)
     report["edge_magnitude_quantiles"] = edge_magnitude_quantiles(output, threshold)
     report["edge_quality_flags"] = edge_quality_flags(report["edge_statistics"])
