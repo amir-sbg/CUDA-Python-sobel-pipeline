@@ -18,6 +18,7 @@ from .metrics import (
     edge_mask,
     edge_component_statistics,
     edge_magnitude_quantiles,
+    edge_localization_distance,
     edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
@@ -126,6 +127,11 @@ def run(
             output,
             threshold,
             radius=1,
+        )
+        report["edge_localization_distance"] = edge_localization_distance(
+            cpu_output,
+            output,
+            threshold,
         )
     report["edge_statistics"] = edge_statistics(output, threshold)
     report["edge_components"] = edge_component_statistics(output, threshold)

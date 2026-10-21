@@ -127,6 +127,80 @@ def spatial_edge_metrics(
     }
 
 
+def edge_localization_distance(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    threshold: float,
+) -> dict[str, float]:
+    """Approximate symmetric edge displacement with an 8-neighbor chamfer map."""
+
+    _validate_threshold(threshold)
+    ref, got = _validated_pair(reference, candidate)
+    if ref.ndim != 2:
+        raise ValueError("edge maps must be two-dimensional")
+    reference_mask = ref >= threshold
+    candidate_mask = got >= threshold
+    if not reference_mask.any() and not candidate_mask.any():
+        return {
+            "candidate_to_reference_mean_pixels": 0.0,
+            "reference_to_candidate_mean_pixels": 0.0,
+            "symmetric_mean_pixels": 0.0,
+            "symmetric_p95_pixels": 0.0,
+        }
+
+    candidate_distances = _chamfer_distance(reference_mask)[candidate_mask]
+    reference_distances = _chamfer_distance(candidate_mask)[reference_mask]
+    fallback = float(np.hypot(*ref.shape))
+    candidate_distances = (
+        candidate_distances if candidate_distances.size else np.asarray([fallback])
+    )
+    reference_distances = (
+        reference_distances if reference_distances.size else np.asarray([fallback])
+    )
+    combined = np.concatenate((candidate_distances, reference_distances))
+    return {
+        "candidate_to_reference_mean_pixels": float(candidate_distances.mean()),
+        "reference_to_candidate_mean_pixels": float(reference_distances.mean()),
+        "symmetric_mean_pixels": float(combined.mean()),
+        "symmetric_p95_pixels": float(np.quantile(combined, 0.95)),
+    }
+
+
+def _chamfer_distance(target: np.ndarray) -> np.ndarray:
+    height, width = target.shape
+    if not target.any():
+        return np.full(target.shape, np.hypot(height, width), dtype=np.float64)
+    distance = np.where(target, 0.0, np.inf)
+    diagonal = np.sqrt(2.0)
+    for row in range(height):
+        for col in range(width):
+            neighbors = []
+            if row > 0:
+                neighbors.append(distance[row - 1, col] + 1.0)
+                if col > 0:
+                    neighbors.append(distance[row - 1, col - 1] + diagonal)
+                if col + 1 < width:
+                    neighbors.append(distance[row - 1, col + 1] + diagonal)
+            if col > 0:
+                neighbors.append(distance[row, col - 1] + 1.0)
+            if neighbors:
+                distance[row, col] = min(distance[row, col], *neighbors)
+    for row in range(height - 1, -1, -1):
+        for col in range(width - 1, -1, -1):
+            neighbors = []
+            if row + 1 < height:
+                neighbors.append(distance[row + 1, col] + 1.0)
+                if col > 0:
+                    neighbors.append(distance[row + 1, col - 1] + diagonal)
+                if col + 1 < width:
+                    neighbors.append(distance[row + 1, col + 1] + diagonal)
+            if col + 1 < width:
+                neighbors.append(distance[row, col + 1] + 1.0)
+            if neighbors:
+                distance[row, col] = min(distance[row, col], *neighbors)
+    return distance
+
+
 def edge_statistics(edges: np.ndarray, threshold: float = 0.20) -> dict[str, float]:
     _validate_threshold(threshold)
     values = np.asarray(edges, dtype=np.float64)

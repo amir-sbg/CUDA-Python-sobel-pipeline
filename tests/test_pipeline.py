@@ -15,6 +15,7 @@ from gpu_edges.metrics import (
     edge_mask,
     edge_component_statistics,
     edge_magnitude_quantiles,
+    edge_localization_distance,
     edge_orientation_coherence,
     edge_orientation_histogram,
     edge_quality_flags,
@@ -160,6 +161,19 @@ def test_spatial_edge_metrics_tolerate_one_pixel_shift() -> None:
 
     assert strict["f1"] == 0.0
     assert tolerant["f1"] == 1.0
+
+
+def test_edge_localization_distance_measures_pixel_shift() -> None:
+    reference = np.zeros((5, 5), dtype=np.float32)
+    candidate = np.zeros((5, 5), dtype=np.float32)
+    reference[2, 2] = 1.0
+    candidate[2, 3] = 1.0
+
+    shifted = edge_localization_distance(reference, candidate, threshold=0.5)
+    aligned = edge_localization_distance(reference, reference, threshold=0.5)
+
+    assert shifted["symmetric_mean_pixels"] == pytest.approx(1.0)
+    assert aligned["symmetric_mean_pixels"] == pytest.approx(0.0)
 
 
 def test_edge_statistics_report_density_and_magnitude() -> None:
