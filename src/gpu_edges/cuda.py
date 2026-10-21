@@ -56,7 +56,7 @@ def launch_shape(
     width: int,
     block_x: int = 16,
     block_y: int = 16,
-) -> dict[str, int]:
+) -> dict[str, int | float]:
     if height < 3 or width < 3:
         raise ValueError("image dimensions must be at least 3")
     if not isinstance(block_x, Integral) or not isinstance(block_y, Integral):
@@ -65,12 +65,17 @@ def launch_shape(
         raise ValueError("block dimensions must be positive and use at most 1024 threads")
     blocks_x = (width + block_x - 1) // block_x
     blocks_y = (height + block_y - 1) // block_y
+    scheduled_threads = blocks_x * blocks_y * block_x * block_y
+    useful_threads = height * width
     return {
         "blocks_x": int(blocks_x),
         "blocks_y": int(blocks_y),
         "threads_per_block": int(block_x * block_y),
         "total_blocks": int(blocks_x * blocks_y),
-        "scheduled_threads": int(blocks_x * blocks_y * block_x * block_y),
+        "scheduled_threads": int(scheduled_threads),
+        "useful_threads": int(useful_threads),
+        "boundary_threads": int(scheduled_threads - useful_threads),
+        "launch_utilization": float(useful_threads / scheduled_threads),
     }
 
 

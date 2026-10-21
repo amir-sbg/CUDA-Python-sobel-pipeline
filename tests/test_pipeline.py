@@ -381,6 +381,9 @@ def test_launch_shape_reports_grid_geometry() -> None:
     assert shape["threads_per_block"] == 128
     assert shape["total_blocks"] == 25
     assert shape["scheduled_threads"] == 3200
+    assert shape["useful_threads"] == 2145
+    assert shape["boundary_threads"] == 1055
+    assert shape["launch_utilization"] == pytest.approx(2145 / 3200)
 
 
 def test_throughput_reports_megapixels_per_second() -> None:
