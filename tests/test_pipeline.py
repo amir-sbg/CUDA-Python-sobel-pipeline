@@ -13,6 +13,7 @@ from gpu_edges.metrics import (
     binary_edge_metrics,
     comparison_metrics,
     edge_mask,
+    edge_component_statistics,
     edge_magnitude_quantiles,
     edge_orientation_coherence,
     edge_orientation_histogram,
@@ -254,6 +255,19 @@ def test_edge_mask_thresholds_magnitude_image() -> None:
     np.testing.assert_array_equal(mask, np.array([[0.0, 0.0], [1.0, 1.0]], dtype=np.float32))
 
 
+def test_component_statistics_detect_connected_and_isolated_edges() -> None:
+    edges = np.zeros((5, 5), dtype=np.float32)
+    edges[1, 1:4] = 1.0
+    edges[4, 4] = 1.0
+
+    report = edge_component_statistics(edges, threshold=0.5)
+
+    assert report["components"] == 2
+    assert report["largest_component_pixels"] == 3
+    assert report["largest_component_fraction"] == pytest.approx(0.75)
+    assert report["isolated_component_fraction"] == pytest.approx(0.5)
+
+
 def test_hysteresis_keeps_weak_edges_connected_to_strong_edges() -> None:
     edges = np.zeros((5, 6), dtype=np.float32)
     edges[2, 1:4] = [1.0, 0.6, 0.55]
@@ -358,6 +372,7 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert "edge_density" in report["edge_statistics"]
     assert report["threshold_sensitivity"]["low_density"] >= report["threshold_sensitivity"]["high_density"]
     assert report["edge_separation"]["edge_pixels"] >= 0
+    assert report["edge_components"]["components"] >= 0
     assert isinstance(report["edge_quality_flags"], list)
     assert "mean_gradient_energy" in report["gradient_energy"]
     assert len(report["edge_orientation_histogram"]) == 8

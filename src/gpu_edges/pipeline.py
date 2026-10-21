@@ -16,6 +16,7 @@ from .metrics import (
     binary_edge_metrics,
     comparison_metrics,
     edge_mask,
+    edge_component_statistics,
     edge_magnitude_quantiles,
     edge_orientation_coherence,
     edge_orientation_histogram,
@@ -126,6 +127,7 @@ def run(
             radius=1,
         )
     report["edge_statistics"] = edge_statistics(output, threshold)
+    report["edge_components"] = edge_component_statistics(output, threshold)
     report["threshold_sensitivity"] = threshold_sensitivity(output, threshold)
     report["edge_separation"] = edge_separation_metrics(output, threshold)
     report["edge_magnitude_quantiles"] = edge_magnitude_quantiles(output, threshold)

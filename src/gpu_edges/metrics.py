@@ -264,6 +264,53 @@ def edge_mask(edges: np.ndarray, threshold: float) -> np.ndarray:
     return (values >= threshold).astype(np.float32)
 
 
+def edge_component_statistics(
+    edges: np.ndarray,
+    threshold: float,
+) -> dict[str, float | int]:
+    """Summarize 8-connected structures in a thresholded edge map."""
+
+    mask = edge_mask(edges, threshold).astype(bool)
+    visited = np.zeros_like(mask, dtype=bool)
+    sizes = []
+    height, width = mask.shape
+    for row, col in zip(*np.nonzero(mask)):
+        if visited[row, col]:
+            continue
+        stack = [(int(row), int(col))]
+        visited[row, col] = True
+        size = 0
+        while stack:
+            current_row, current_col = stack.pop()
+            size += 1
+            for row_offset in (-1, 0, 1):
+                for col_offset in (-1, 0, 1):
+                    next_row = current_row + row_offset
+                    next_col = current_col + col_offset
+                    if (
+                        0 <= next_row < height
+                        and 0 <= next_col < width
+                        and mask[next_row, next_col]
+                        and not visited[next_row, next_col]
+                    ):
+                        visited[next_row, next_col] = True
+                        stack.append((next_row, next_col))
+        sizes.append(size)
+
+    edge_pixels = int(mask.sum())
+    largest = max(sizes, default=0)
+    return {
+        "components": len(sizes),
+        "edge_pixels": edge_pixels,
+        "largest_component_pixels": largest,
+        "largest_component_fraction": float(largest / edge_pixels if edge_pixels else 0.0),
+        "mean_component_pixels": float(np.mean(sizes) if sizes else 0.0),
+        "isolated_component_fraction": float(
+            sum(size == 1 for size in sizes) / len(sizes) if sizes else 0.0
+        ),
+    }
+
+
 def hysteresis_edge_mask(
     edges: np.ndarray,
     high_threshold: float,
