@@ -31,6 +31,7 @@ from .metrics import (
     non_maximum_suppression,
     orientation_distribution_metrics,
     nms_reduction_ratio,
+    minimum_memory_bandwidth_gbps,
     scale_space_consistency,
     speedup_ratio,
     spatial_edge_metrics,
@@ -86,6 +87,9 @@ def run(
             image.shape[1],
             cpu_ms,
         ),
+        "cpu_minimum_memory_bandwidth_gbps": minimum_memory_bandwidth_gbps(
+            image.shape[0], image.shape[1], cpu_ms
+        ),
     }
 
     if not cpu_only and not cuda_available():
@@ -107,6 +111,9 @@ def run(
             image.shape[0],
             image.shape[1],
             gpu_ms,
+        )
+        report["gpu_minimum_memory_bandwidth_gbps"] = minimum_memory_bandwidth_gbps(
+            image.shape[0], image.shape[1], gpu_ms
         )
         report["comparison"] = comparison_metrics(cpu_output, output)
 

@@ -623,3 +623,21 @@ def throughput_mpix_per_second(height: int, width: int, elapsed_ms: float) -> fl
         return None
     pixels = height * width
     return pixels / 1_000_000.0 / (elapsed_ms / 1000.0)
+
+
+def minimum_memory_bandwidth_gbps(
+    height: int,
+    width: int,
+    elapsed_ms: float,
+    bytes_per_pixel: int = 4,
+    arrays_read: int = 1,
+    arrays_written: int = 1,
+) -> float | None:
+    if min(height, width, bytes_per_pixel, arrays_read, arrays_written) < 1:
+        raise ValueError("image and memory-traffic dimensions must be positive")
+    if elapsed_ms < 0:
+        raise ValueError("elapsed_ms must not be negative")
+    if elapsed_ms == 0:
+        return None
+    bytes_moved = height * width * bytes_per_pixel * (arrays_read + arrays_written)
+    return bytes_moved / (elapsed_ms / 1000.0) / 1_000_000_000.0

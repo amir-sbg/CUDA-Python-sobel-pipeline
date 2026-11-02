@@ -6,10 +6,10 @@ The pipeline can generate a deterministic test image or read a grayscale image, 
 
 ## What it reports
 
-- CPU and GPU kernel time, throughput, speedup, and launch utilization
+- CPU and GPU kernel time, pixel throughput, minimum effective memory bandwidth, speedup, and launch utilization
 - Maximum error and RMSE between CPU and CUDA magnitudes
-- Binary edge precision, recall, F1, and IoU
-- Edge density, threshold sensitivity, foreground/background gradient separation, orientation statistics, and optional non-maximum suppression reduction
+- Binary edge precision, recall, F1, IoU, and threshold-selection curves
+- Edge density, threshold sensitivity, connected-topology comparison, foreground/background gradient separation, orientation statistics, and optional non-maximum suppression reduction
 - Scale-space stability after an optional second smoothing pass
 
 ## Setup

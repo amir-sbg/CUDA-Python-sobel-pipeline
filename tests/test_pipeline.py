@@ -28,6 +28,7 @@ from gpu_edges.metrics import (
     non_maximum_suppression,
     orientation_distribution_metrics,
     nms_reduction_ratio,
+    minimum_memory_bandwidth_gbps,
     scale_space_consistency,
     speedup_ratio,
     spatial_edge_metrics,
@@ -424,6 +425,20 @@ def test_throughput_reports_megapixels_per_second() -> None:
         throughput_mpix_per_second(0, 100, 1.0)
 
 
+def test_memory_bandwidth_reports_minimum_image_traffic() -> None:
+    bandwidth = minimum_memory_bandwidth_gbps(
+        1000,
+        1000,
+        elapsed_ms=2.0,
+        bytes_per_pixel=4,
+        arrays_read=1,
+        arrays_written=1,
+    )
+
+    assert bandwidth == pytest.approx(4.0)
+    assert minimum_memory_bandwidth_gbps(10, 10, 0.0) is None
+
+
 def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     config = PipelineConfig(
         height=32,
@@ -439,6 +454,7 @@ def test_cpu_pipeline_writes_output_and_report(tmp_path) -> None:
     assert report["launch"]["threads_per_block"] == config.block_x * config.block_y
     assert report["launch"]["total_blocks"] == 4
     assert report["cpu_throughput_mpix_per_s"] > 0
+    assert report["cpu_minimum_memory_bandwidth_gbps"] > 0
     assert report["edge_threshold"] == config.edge_threshold
     assert "edge_density" in report["edge_statistics"]
     assert report["threshold_sensitivity"]["low_density"] >= report["threshold_sensitivity"]["high_density"]
