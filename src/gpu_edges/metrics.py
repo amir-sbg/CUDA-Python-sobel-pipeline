@@ -405,6 +405,31 @@ def edge_component_statistics(
     }
 
 
+def edge_topology_comparison(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    threshold: float,
+) -> dict[str, float | int]:
+    ref, got = _validated_pair(reference, candidate)
+    reference_stats = edge_component_statistics(ref, threshold)
+    candidate_stats = edge_component_statistics(got, threshold)
+    reference_components = int(reference_stats["components"])
+    candidate_components = int(candidate_stats["components"])
+    return {
+        "reference_components": reference_components,
+        "candidate_components": candidate_components,
+        "component_count_delta": candidate_components - reference_components,
+        "largest_component_fraction_gap": float(
+            candidate_stats["largest_component_fraction"]
+            - reference_stats["largest_component_fraction"]
+        ),
+        "isolated_component_fraction_gap": float(
+            candidate_stats["isolated_component_fraction"]
+            - reference_stats["isolated_component_fraction"]
+        ),
+    }
+
+
 def hysteresis_edge_mask(
     edges: np.ndarray,
     high_threshold: float,

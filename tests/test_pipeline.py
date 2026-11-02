@@ -22,6 +22,7 @@ from gpu_edges.metrics import (
     edge_separation_metrics,
     edge_statistics,
     edge_threshold_curve,
+    edge_topology_comparison,
     gradient_energy,
     hysteresis_edge_mask,
     non_maximum_suppression,
@@ -319,6 +320,20 @@ def test_component_statistics_detect_connected_and_isolated_edges() -> None:
     assert report["largest_component_pixels"] == 3
     assert report["largest_component_fraction"] == pytest.approx(0.75)
     assert report["isolated_component_fraction"] == pytest.approx(0.5)
+
+
+def test_edge_topology_comparison_detects_fragmentation() -> None:
+    reference = np.zeros((5, 5), dtype=np.float32)
+    candidate = np.zeros((5, 5), dtype=np.float32)
+    reference[2, 1:4] = 1.0
+    candidate[1, 1] = candidate[2, 3] = candidate[4, 4] = 1.0
+
+    report = edge_topology_comparison(reference, candidate, threshold=0.5)
+
+    assert report["reference_components"] == 1
+    assert report["candidate_components"] == 3
+    assert report["component_count_delta"] == 2
+    assert report["isolated_component_fraction_gap"] > 0
 
 
 def test_hysteresis_keeps_weak_edges_connected_to_strong_edges() -> None:
