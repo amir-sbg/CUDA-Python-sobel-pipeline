@@ -21,6 +21,7 @@ from gpu_edges.metrics import (
     edge_quality_flags,
     edge_separation_metrics,
     edge_statistics,
+    edge_threshold_curve,
     gradient_energy,
     hysteresis_edge_mask,
     non_maximum_suppression,
@@ -148,6 +149,21 @@ def test_binary_edge_metrics_report_zero_f1_for_disjoint_edges() -> None:
     candidate = np.array([[0.0, 1.0]], dtype=np.float32)
 
     assert binary_edge_metrics(reference, candidate, threshold=0.5)["f1"] == 0.0
+
+
+def test_edge_threshold_curve_recovers_rescaled_edge_map() -> None:
+    reference = np.array([[0.0, 1.0], [1.0, 0.0]], dtype=np.float32)
+    candidate = reference * 0.5
+
+    report = edge_threshold_curve(
+        reference,
+        candidate,
+        reference_threshold=0.8,
+        candidate_thresholds=(0.2, 0.5, 0.8),
+    )
+
+    assert report["best_threshold"] == pytest.approx(0.2)
+    assert report["best_f1"] == pytest.approx(1.0)
 
 
 def test_spatial_edge_metrics_tolerate_one_pixel_shift() -> None:

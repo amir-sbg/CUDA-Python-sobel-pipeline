@@ -78,6 +78,26 @@ def binary_edge_metrics(
     }
 
 
+def edge_threshold_curve(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    reference_threshold: float,
+    candidate_thresholds: list[float] | tuple[float, ...],
+) -> dict[str, object]:
+    _validate_threshold(reference_threshold)
+    if not candidate_thresholds:
+        raise ValueError("candidate_thresholds must not be empty")
+    ref, got = _validated_pair(reference, candidate)
+    reference_mask = (ref >= reference_threshold).astype(np.float64)
+    rows = []
+    for threshold in candidate_thresholds:
+        _validate_threshold(threshold)
+        metrics = binary_edge_metrics(reference_mask, got, threshold)
+        rows.append({"threshold": float(threshold), **metrics})
+    best = max(rows, key=lambda row: (float(row["f1"]), -float(row["threshold"])))
+    return {"best_threshold": best["threshold"], "best_f1": best["f1"], "rows": rows}
+
+
 def spatial_edge_metrics(
     reference: np.ndarray,
     candidate: np.ndarray,
