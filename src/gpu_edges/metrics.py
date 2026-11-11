@@ -186,6 +186,33 @@ def edge_localization_distance(
     }
 
 
+def pratt_figure_of_merit(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    threshold: float,
+    alpha: float = 1.0 / 9.0,
+) -> float:
+    """Score edge detection using misses, false positives, and localization error."""
+
+    _validate_threshold(threshold)
+    if not np.isfinite(alpha) or alpha <= 0:
+        raise ValueError("alpha must be finite and positive")
+    ref, got = _validated_pair(reference, candidate)
+    if ref.ndim != 2:
+        raise ValueError("edge maps must be two-dimensional")
+    reference_mask = ref >= threshold
+    candidate_mask = got >= threshold
+    reference_count = int(reference_mask.sum())
+    candidate_count = int(candidate_mask.sum())
+    if reference_count == 0 and candidate_count == 0:
+        return 1.0
+    if reference_count == 0 or candidate_count == 0:
+        return 0.0
+    distances = _chamfer_distance(reference_mask)[candidate_mask]
+    score = np.sum(1.0 / (1.0 + alpha * distances**2))
+    return float(score / max(reference_count, candidate_count))
+
+
 def _chamfer_distance(target: np.ndarray) -> np.ndarray:
     height, width = target.shape
     if not target.any():

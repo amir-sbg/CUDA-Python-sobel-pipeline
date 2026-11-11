@@ -30,6 +30,7 @@ from .metrics import (
     hysteresis_edge_mask,
     non_maximum_suppression,
     orientation_distribution_metrics,
+    pratt_figure_of_merit,
     nms_reduction_ratio,
     minimum_memory_bandwidth_gbps,
     scale_space_consistency,
@@ -138,6 +139,11 @@ def run(
             radius=1,
         )
         report["edge_localization_distance"] = edge_localization_distance(
+            cpu_output,
+            output,
+            threshold,
+        )
+        report["pratt_figure_of_merit"] = pratt_figure_of_merit(
             cpu_output,
             output,
             threshold,

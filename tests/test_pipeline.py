@@ -27,6 +27,7 @@ from gpu_edges.metrics import (
     hysteresis_edge_mask,
     non_maximum_suppression,
     orientation_distribution_metrics,
+    pratt_figure_of_merit,
     nms_reduction_ratio,
     minimum_memory_bandwidth_gbps,
     scale_space_consistency,
@@ -192,6 +193,22 @@ def test_edge_localization_distance_measures_pixel_shift() -> None:
 
     assert shifted["symmetric_mean_pixels"] == pytest.approx(1.0)
     assert aligned["symmetric_mean_pixels"] == pytest.approx(0.0)
+
+
+def test_pratt_score_penalizes_localization_and_false_edges() -> None:
+    reference = np.zeros((7, 7), dtype=np.float32)
+    shifted = np.zeros((7, 7), dtype=np.float32)
+    noisy = np.zeros((7, 7), dtype=np.float32)
+    reference[3, 2:5] = 1.0
+    shifted[4, 2:5] = 1.0
+    noisy[4, 2:5] = 1.0
+    noisy[0, 0] = 1.0
+
+    assert pratt_figure_of_merit(reference, reference, 0.5) == pytest.approx(1.0)
+    assert pratt_figure_of_merit(reference, shifted, 0.5) < 1.0
+    assert pratt_figure_of_merit(reference, noisy, 0.5) < pratt_figure_of_merit(
+        reference, shifted, 0.5
+    )
 
 
 def test_edge_statistics_report_density_and_magnitude() -> None:
