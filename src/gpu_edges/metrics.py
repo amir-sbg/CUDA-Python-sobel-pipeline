@@ -49,6 +49,44 @@ def scale_space_consistency(
     }
 
 
+def multiscale_edge_persistence(
+    reference: np.ndarray,
+    smoothed: np.ndarray,
+    quantile: float = 0.85,
+) -> dict[str, float | int]:
+    """Compare the strongest edges before and after additional smoothing."""
+
+    if not 0.0 < quantile < 1.0:
+        raise ValueError("quantile must be between zero and one")
+    ref, coarse = _validated_pair(reference, smoothed)
+    if ref.ndim != 2:
+        raise ValueError("edge maps must be two-dimensional")
+
+    def strongest(values: np.ndarray) -> np.ndarray:
+        positive = values[values > 0]
+        if positive.size == 0:
+            return np.zeros(values.shape, dtype=bool)
+        threshold = float(np.quantile(positive, quantile))
+        return values >= threshold
+
+    reference_mask = strongest(ref)
+    smoothed_mask = strongest(coarse)
+    retained = int(np.count_nonzero(reference_mask & smoothed_mask))
+    reference_count = int(reference_mask.sum())
+    smoothed_count = int(smoothed_mask.sum())
+    union = int(np.count_nonzero(reference_mask | smoothed_mask))
+    return {
+        "quantile": quantile,
+        "reference_edge_pixels": reference_count,
+        "smoothed_edge_pixels": smoothed_count,
+        "retained_edge_fraction": retained / reference_count if reference_count else 1.0,
+        "introduced_edge_fraction": (
+            (smoothed_count - retained) / smoothed_count if smoothed_count else 0.0
+        ),
+        "edge_iou": retained / union if union else 1.0,
+    }
+
+
 def binary_edge_metrics(
     reference: np.ndarray,
     candidate: np.ndarray,

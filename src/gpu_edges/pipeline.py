@@ -33,6 +33,7 @@ from .metrics import (
     pratt_figure_of_merit,
     nms_reduction_ratio,
     minimum_memory_bandwidth_gbps,
+    multiscale_edge_persistence,
     scale_space_consistency,
     speedup_ratio,
     spatial_edge_metrics,
@@ -182,6 +183,10 @@ def run(
         report["scale_space"] = {
             "additional_sigma": config.scale_check_sigma,
             **scale_space_consistency(reference_magnitude, scale_edges),
+            "edge_persistence": multiscale_edge_persistence(
+                reference_magnitude,
+                scale_edges,
+            ),
         }
     if config.noise_check_std is not None:
         generator = np.random.default_rng(config.seed + 1)

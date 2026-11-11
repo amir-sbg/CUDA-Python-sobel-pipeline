@@ -30,6 +30,7 @@ from gpu_edges.metrics import (
     pratt_figure_of_merit,
     nms_reduction_ratio,
     minimum_memory_bandwidth_gbps,
+    multiscale_edge_persistence,
     scale_space_consistency,
     speedup_ratio,
     spatial_edge_metrics,
@@ -128,6 +129,20 @@ def test_scale_space_consistency_is_one_for_rescaled_maps() -> None:
     assert report["cosine_similarity"] == pytest.approx(1.0)
     assert report["pearson_correlation"] == pytest.approx(1.0)
     assert report["normalized_mae"] == pytest.approx(0.0)
+
+
+def test_multiscale_persistence_tracks_strong_edge_overlap() -> None:
+    reference = np.array([[0.0, 0.2, 0.8], [0.1, 0.4, 1.0]], dtype=np.float32)
+    identical = multiscale_edge_persistence(reference, reference * 0.5, quantile=0.6)
+    changed = reference.copy()
+    changed[1, 2] = 0.0
+    changed[0, 0] = 1.0
+    shifted = multiscale_edge_persistence(reference, changed, quantile=0.6)
+
+    assert identical["retained_edge_fraction"] == pytest.approx(1.0)
+    assert identical["edge_iou"] == pytest.approx(1.0)
+    assert shifted["retained_edge_fraction"] < 1.0
+    assert shifted["introduced_edge_fraction"] > 0.0
 
 
 def test_binary_edge_metrics_report_overlap() -> None:
