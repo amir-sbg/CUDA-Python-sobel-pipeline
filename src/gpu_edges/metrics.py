@@ -134,7 +134,13 @@ def edge_threshold_curve(
         metrics = binary_edge_metrics(reference_mask, candidate_mask, 0.5)
         rows.append({"threshold": float(threshold), **metrics})
     best = max(rows, key=lambda row: (float(row["f1"]), -float(row["threshold"])))
-    return {"best_threshold": best["threshold"], "best_f1": best["f1"], "rows": rows}
+    robust = [float(row["threshold"]) for row in rows if float(row["f1"]) >= 0.95 * float(best["f1"])]
+    return {
+        "best_threshold": best["threshold"],
+        "best_f1": best["f1"],
+        "near_optimal_threshold_range": [min(robust), max(robust)],
+        "rows": rows,
+    }
 
 
 def spatial_edge_metrics(

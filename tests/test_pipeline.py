@@ -168,6 +168,7 @@ def test_threshold_curve_keeps_reference_mask_fixed_across_candidate_thresholds(
     report = edge_threshold_curve(reference, candidate, 0.5, [0.1, 0.8])
     assert report["rows"][0]["recall"] == pytest.approx(1.0)
     assert report["rows"][1]["f1"] == pytest.approx(1.0)
+    assert report["near_optimal_threshold_range"] == [0.8, 0.8]
 
 
 def test_binary_edge_metrics_report_zero_f1_for_disjoint_edges() -> None:
