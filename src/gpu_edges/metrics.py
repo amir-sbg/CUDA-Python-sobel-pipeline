@@ -130,7 +130,8 @@ def edge_threshold_curve(
     rows = []
     for threshold in candidate_thresholds:
         _validate_threshold(threshold)
-        metrics = binary_edge_metrics(reference_mask, got, threshold)
+        candidate_mask = (got >= threshold).astype(np.float64)
+        metrics = binary_edge_metrics(reference_mask, candidate_mask, 0.5)
         rows.append({"threshold": float(threshold), **metrics})
     best = max(rows, key=lambda row: (float(row["f1"]), -float(row["threshold"])))
     return {"best_threshold": best["threshold"], "best_f1": best["f1"], "rows": rows}
